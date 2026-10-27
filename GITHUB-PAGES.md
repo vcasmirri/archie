@@ -68,9 +68,22 @@ If you used cloud saves while running locally, your pet loads from Google Drive 
 
 ## 7. Put it on your phone (optional)
 
-Open your Archie address in your phone's browser, sign in, then add it to your home screen so it opens like an app:
-- **iPhone (Safari):** Share button → **Add to Home Screen**.
-- **Android (Chrome):** ⋮ menu → **Add to Home screen**.
+Archie works as a home-screen app with a phone layout: the device fills the top of the screen, and a tab bar at the bottom switches between Tasks, Vitals, Recurring, and Log.
+
+**One extra Google step first.** Phones sign in by leaving the page for Google's sign-in screen and coming back, so Google needs to know where "back" is:
+
+1. In the Google Cloud console, open your Web application client again (same place as step 5).
+2. Under **Authorized redirect URIs**, click **Add URI** and enter your full Archie address, with the trailing slash:
+   ```
+   https://USERNAME.github.io/archie/
+   ```
+3. Click **Save**.
+
+**Then add it to your home screen:**
+- **iPhone (Safari):** open your Archie address, tap the Share button → **Add to Home Screen** → **Add**.
+- **Android (Chrome):** ⋮ menu → **Add to Home screen** (or **Install app**).
+
+Open Archie from the new icon and tap **Connect Google Tasks**. Sign-in lasts about an hour, as on the web; when it expires, tap **Reconnect** and you'll briefly bounce to Google and back.
 
 ---
 
@@ -103,6 +116,7 @@ Yes:
 | **"Add your Google OAuth client ID…" banner** | The uploaded `index.html` still has the placeholder. Paste your client ID into `CONFIG` and upload again. |
 | **Banner about turning on the Google Drive API** | Enable **Google Drive API** in your Cloud project (README step 2), then click **Reconnect**. |
 | **☁ label says "Saved in this browser only"** | Archie couldn't reach Drive just then. Changes are kept and upload on the next save. If it persists, click **Reconnect** and make sure the Drive permission is allowed. |
+| **`redirect_uri_mismatch` on your phone** | Add your full Archie address (`https://USERNAME.github.io/archie/`, with the trailing slash) under **Authorized redirect URIs** on the Web client (step 7). |
 | **Changes don't show up after uploading a new version** | Wait for GitHub to republish (watch the **Actions** tab for a green check), then hard-refresh. |
 
 ## Want a shorter address?

@@ -2,8 +2,17 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Archie</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Archie">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#dcefed" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#12202b" media="(prefers-color-scheme: dark)">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
 <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -86,7 +95,7 @@
     text-shadow: 1px 1px 0 #1e2b3a, -1px -1px 0 #1e2b3a, 1px -1px 0 #1e2b3a, -1px 1px 0 #1e2b3a; pointer-events: none; }
   .msg { position: relative; margin: 18px auto 0; max-width: 380px; padding: 12px 16px; background: var(--card); border: 3px solid var(--line); box-shadow: 4px 4px 0 var(--shadow); text-align: center; font-size: 22px; min-height: 52px; }
   .msg::before { content: ""; position: absolute; top: -12px; left: 50%; margin-left: -9px; width: 14px; height: 14px; background: var(--card); border-left: 3px solid var(--line); border-top: 3px solid var(--line); transform: rotate(45deg); }
-  @media (max-width: 460px) { html:not(.widget) .device { transform: scale(.8); transform-origin: top left; margin-left: calc(50% - 168px); margin-bottom: -110px; } }
+  @media (max-width: 460px) { html:not(.widget):not(.phone) .device { transform: scale(.8); transform-origin: top left; margin-left: calc(50% - 168px); margin-bottom: -110px; } }
 
   /* pet motion: one LCD pixel per tick, every move and frame flip on the same beat */
   .mover{position:absolute;left:0;top:0;width:112px;height:112px}
@@ -217,6 +226,29 @@
   html.widget.open .app > .stack:last-child { height: 100vh; overflow-y: auto; padding: 12px 12px 24px 4px; gap: 20px; }
   html.widget.open .banner { position: fixed; top: 56px; right: 12px; width: 440px; padding: 0; z-index: 10; }
   html.widget.full header { cursor: grab; }
+
+  /* Phone layout (opened from the home screen, or any browser with ?phone in the address):
+     the device fills the width, one card shows at a time, and a tab bar sits at the bottom. */
+  .tabbar { display: none; }
+  html.phone { --dev-scale: 1; }
+  html.phone body { padding: env(safe-area-inset-top) 0 calc(84px + env(safe-area-inset-bottom)); }
+  html.phone button, html.phone .matrix { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+  html.phone header { padding: 12px 16px 8px; gap: 8px; }
+  html.phone .logo { width: 36px; height: 36px; }
+  html.phone .logo .hpix { transform: scale(.75); transform-origin: 0 0; }
+  html.phone header h1 { font-size: 16px; }
+  html.phone .tagline { display: none; }
+  html.phone .app { grid-template-columns: minmax(0, 1fr); gap: 20px; padding: 0 12px 24px; }
+  html.phone .stack { gap: 0; }
+  html.phone .device { transform: scale(var(--dev-scale)); transform-origin: top left; margin: 0 0 calc(-550px * (1 - var(--dev-scale))) calc(50% - 210px * var(--dev-scale)); }
+  html.phone .msg { margin-top: 12px; font-size: 20px; }
+  html.phone .card { display: none; box-shadow: 4px 4px 0 var(--shadow); }
+  html.phone .card.tab-on { display: block; }
+  html.phone .tabbar { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+    padding: 6px 8px calc(6px + env(safe-area-inset-bottom)); background: var(--card); border-top: 3px solid var(--line); }
+  .tab { display: flex; flex-direction: column; align-items: center; gap: 4px; min-height: 56px; justify-content: center; background: none; border: 0; padding: 4px 0; color: var(--muted); cursor: pointer; font-size: 17px; }
+  .tab i { position: relative; width: 21px; height: 21px; }
+  .tab.on { color: var(--ink); background: var(--field); outline: 2px solid var(--line); outline-offset: -2px; }
 
   /* Cards */
   .card { background: var(--card); border: 3px solid var(--line); box-shadow: 6px 6px 0 var(--shadow); scroll-margin-top: 16px; }
@@ -396,6 +428,8 @@
   </div>
 </main>
 
+<nav class="tabbar" id="tabbar" aria-label="Sections"></nav>
+
 <script>
 /* ============ CONFIG — paste your OAuth client ID here (see README) ============ */
 const CONFIG = {
@@ -506,6 +540,7 @@ const G = {
     });
   },
   signIn(interactive = true) {
+    if (REDIRECT_AUTH) return redirectSignIn();
     if (NATIVE) return nativeToken(interactive).then(r => {
       this.token = r.access_token;
       this.exp = Date.now() + (Number(r.expires_in) || 3600) * 1000;
@@ -583,7 +618,37 @@ function nativeToken(interactive) {
   });
 }
 /** @param {{scope?: string}} r @returns {boolean} whether the Drive app-folder permission was granted */
-const hasDriveScope = r => NATIVE ? String(r.scope || '').split(' ').includes(DRIVE_SCOPE) : google.accounts.oauth2.hasGrantedAllScopes(r, DRIVE_SCOPE);
+const hasDriveScope = r => (NATIVE || REDIRECT_AUTH || !(window.google && google.accounts && google.accounts.oauth2)) ? String(r.scope || '').split(' ').includes(DRIVE_SCOPE) : google.accounts.oauth2.hasGrantedAllScopes(r, DRIVE_SCOPE);
+
+/* ---- Home-screen app sign-in ----
+   Google's pop-up sign-in doesn't work reliably in an app added to the iPhone home screen, so there the page
+   goes to Google's sign-in page and comes back with the token in the address (#access_token=…). */
+const STANDALONE = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+const REDIRECT_AUTH = !NATIVE && STANDALONE;
+const AUTH_STATE_KEY = 'archie.authState';
+/** @returns {string} where Google sends you back after signing in (must be an Authorized redirect URI on the client) */
+const redirectURI = () => location.origin + location.pathname;
+/** Leave the page for Google's sign-in screen. @returns {Promise<never>} */
+function redirectSignIn() {
+  const state = uid() + uid();
+  try { localStorage.setItem(AUTH_STATE_KEY, state); } catch (e) {}
+  const q = new URLSearchParams({ client_id: CONFIG.CLIENT_ID, redirect_uri: redirectURI(), response_type: 'token',
+    scope: 'https://www.googleapis.com/auth/tasks ' + DRIVE_SCOPE, include_granted_scopes: 'true', state });
+  location.href = 'https://accounts.google.com/o/oauth2/v2/auth?' + q;
+  return new Promise(() => {});
+}
+/** Read a token Google just sent back in the address, then tidy the address. 
+ * @returns {{access_token: string, expires_in: number, scope: string} | {error: string} | null} */
+function takeRedirectToken() {
+  if (!location.hash || !/(access_token|error)=/.test(location.hash)) return null;
+  const h = new URLSearchParams(location.hash.slice(1));
+  history.replaceState(null, '', location.pathname + location.search);
+  let expected = null;
+  try { expected = localStorage.getItem(AUTH_STATE_KEY); localStorage.removeItem(AUTH_STATE_KEY); } catch (e) {}
+  if (h.get('error')) return { error: h.get('error') === 'access_denied' ? 'Google sign-in was cancelled.' : 'Google sign-in failed: ' + h.get('error') };
+  if (!expected || h.get('state') !== expected) return { error: "That sign-in didn't come from this page. Try connecting again." };
+  return { access_token: h.get('access_token') || '', expires_in: Number(h.get('expires_in')) || 3600, scope: h.get('scope') || '' };
+}
 let refreshTimer = null;
 
 /* ============ Pet logic ============ */
@@ -1081,6 +1146,7 @@ function buildIcons() {
     const b = makeSeg(key, label, true);
     b.onclick = () => {
       navOn = key; renderIcons();
+      if (PHONE) { setTab(key); return; }
       const sec = $(target); sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
       sec.classList.remove('flash'); void sec.offsetWidth; sec.classList.add('flash');
     };
@@ -1291,9 +1357,11 @@ function handleErr(e) {
 }
 
 /* ============ Modes ============ */
-/** @param {{silent?: boolean}} [opts] silent: reconnect from a saved sign-in without showing anything */
+/** @param {{silent?: boolean, token?: {access_token: string, expires_in: number, scope: string}}} [opts]
+ * silent: reconnect from a saved sign-in without showing anything; token: one Google just handed back after a redirect sign-in */
 async function connectGoogle(opts = {}) {
   const silent = !!(opts && opts.silent);
+  const given = opts && opts.token ? opts.token : null;
   if (NATIVE) { /* the app handles sign-in itself */ }
   else if (!CONFIG.CLIENT_ID || CONFIG.CLIENT_ID.startsWith('PASTE')) {
     return showBanner('Add your Google OAuth client ID to the CONFIG section at the top of the script first — the README walks you through getting one.');
@@ -1301,11 +1369,12 @@ async function connectGoogle(opts = {}) {
   else if (location.protocol === 'file:') {
     return showBanner('Google sign-in needs the page served from http://localhost:8000, not opened as a file. See README step 5.');
   }
-  else if (!(window.google && google.accounts && google.accounts.oauth2)) {
+  else if (!REDIRECT_AUTH && !given && !(window.google && google.accounts && google.accounts.oauth2)) {
     return showBanner("Google's sign-in script hasn't loaded yet. Check your connection and try again.");
   }
   try {
-    const tokenResponse = await G.signIn(!silent);
+    if (given) { G.token = given.access_token; G.exp = Date.now() + given.expires_in * 1000; G.lastResponse = given; }
+    const tokenResponse = given || await G.signIn(!silent);
     hideBanner();
     S.mode = 'google'; backend = G;
     if (await Cloud.init(tokenResponse)) addLog('Loaded your pet from Google Drive.');
@@ -1427,12 +1496,59 @@ function initWidget() {
   });
 }
 
+/* ============ Phone layout ============ */
+const PHONE = !WIDGET && (STANDALONE || new URLSearchParams(location.search).has('phone'));
+const TAB_KEY = 'archie.phoneTab';
+const TABS = [['vitals', 'Vitals', '#secVitals'], ['tasks', 'Tasks', '#secTasks'], ['recurring', 'Recurring', '#secRecurring'], ['log', 'Log', '#secLog']];
+/** Show one section under the device and light its tab. @param {string} key @returns {void} */
+function setTab(key) {
+  for (const [k, , sel] of TABS) $(sel).classList.toggle('tab-on', k === key);
+  for (const b of document.querySelectorAll('#tabbar .tab')) {
+    const on = b.dataset.key === key;
+    b.classList.toggle('on', on);
+    b.setAttribute('aria-current', on ? 'page' : 'false');
+  }
+  navOn = key; renderIcons();
+  try { localStorage.setItem(TAB_KEY, key); } catch (e) {}
+}
+/** Scale the device to fit the screen width. @returns {void} */
+function fitDevice() {
+  // Fit the width, and keep it to about half the screen height so the task list peeks out below.
+  const scale = Math.min(1, (document.documentElement.clientWidth - 24) / 420, (window.innerHeight * 0.52) / 550);
+  document.documentElement.style.setProperty('--dev-scale', scale.toFixed(3));
+}
+/** @returns {void} */
+function initPhone() {
+  if (!PHONE) return;
+  document.documentElement.classList.add('phone');
+  const bar = $('#tabbar');
+  for (const [key, label] of TABS) {
+    const b = document.createElement('button');
+    b.className = 'tab'; b.dataset.key = key;
+    const box = document.createElement('i'), dot = document.createElement('span');
+    dot.className = 'ipix'; dot.style.boxShadow = tlShadow(TL_NAV[key], 3, 'currentColor');
+    box.append(dot);
+    b.append(box, document.createTextNode(label));
+    b.onclick = () => { setTab(key); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+    bar.append(b);
+  }
+  let saved = 'tasks';
+  try { saved = localStorage.getItem(TAB_KEY) || 'tasks'; } catch (e) {}
+  setTab(TABS.some(t => t[0] === saved) ? saved : 'tasks');
+  fitDevice();
+  window.addEventListener('resize', fitDevice);
+}
+
 /* ============ Boot ============ */
 (async function boot() {
+  const returned = takeRedirectToken();
   initWidget();
+  initPhone();
   buildIcons();
   tick(); render(); renderTasks();
-  if (S.mode === 'demo') await useDemo();
+  if (returned && 'error' in returned) showBanner(returned.error, 'Try again', connectGoogle);
+  else if (returned) await connectGoogle({ token: returned });
+  else if (S.mode === 'demo') await useDemo();
   else if (NATIVE) await connectGoogle({ silent: true });
   else showBanner('Welcome back! Reconnect to Google Tasks to sync your pet.', 'Reconnect', connectGoogle);
 })();
