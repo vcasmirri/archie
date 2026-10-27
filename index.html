@@ -239,9 +239,20 @@
   html.phone header h1 { font-size: 16px; }
   html.phone .tagline { display: none; }
   html.phone .app { grid-template-columns: minmax(0, 1fr); gap: 20px; padding: 0 12px 24px; }
-  html.phone .stack { gap: 0; }
+  html.phone .app > .stack { display: contents; } /* lets the pinned device stay put across every section below it */
   html.phone .device { transform: scale(var(--dev-scale)); transform-origin: top left; margin: 0 0 calc(-550px * (1 - var(--dev-scale))) calc(50% - 210px * var(--dev-scale)); }
-  html.phone .msg { margin-top: 12px; font-size: 20px; }
+  html.phone .msg { margin: 8px auto 0; padding: 6px 12px; min-height: 0; font-size: 18px; }
+  /* The device stays pinned at the top while the section below it scrolls. */
+  html.phone #deviceWrap { position: sticky; top: 0; z-index: 10; margin: 0 -12px; padding: 6px 12px 10px; background: var(--bg); border-bottom: 3px solid var(--line); }
+  html.phone body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: env(safe-area-inset-top); background: var(--bg); z-index: 30; }
+  html.phone #deviceWrap { top: env(safe-area-inset-top); }
+  /* While typing, the device shrinks so the text box and keyboard fit beneath it. */
+  html.phone.typing .msg { display: none; }
+  /* Wide screens: the device column stays put while the task column scrolls. */
+  @media (min-width: 921px) and (min-height: 640px) {
+    html:not(.widget):not(.phone) .app { align-items: stretch; }
+    html:not(.widget):not(.phone) #deviceWrap { position: sticky; top: 16px; }
+  }
   html.phone .card { display: none; box-shadow: 4px 4px 0 var(--shadow); }
   html.phone .card.tab-on { display: block; }
   html.phone .tabbar { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
@@ -274,7 +285,8 @@
   ul.tasks, ul.orders, ul.log { list-style: none; margin: 0; padding: 0; }
   ul.tasks li, ul.orders li { display: flex; align-items: center; gap: 12px; padding: 6px 0; border-bottom: 2px dashed var(--line); min-height: 50px; }
   ul.tasks li.overdue .ttitle { color: var(--bad); }
-  .ttitle { flex: 1; overflow-wrap: anywhere; }
+  .ttitle { flex: 1; overflow-wrap: anywhere; min-width: 45%; } /* on narrow screens the date chip wraps under the title instead of squeezing it */
+  ul.tasks li, ul.orders li { flex-wrap: wrap; }
   .check { flex: none; width: 26px; height: 26px; border: 3px solid var(--line); background: var(--field); cursor: pointer; padding: 0; box-shadow: 2px 2px 0 var(--shadow); }
   .check:hover { background: #8fd3c1; }
   .check:disabled { opacity: .4; }
@@ -1514,7 +1526,9 @@ function setTab(key) {
 /** Scale the device to fit the screen width. @returns {void} */
 function fitDevice() {
   // Fit the width, and keep it to about half the screen height so the task list peeks out below.
-  const scale = Math.min(1, (document.documentElement.clientWidth - 24) / 420, (window.innerHeight * 0.52) / 550);
+  // Fit the width, and keep the pinned device to about 40% of the screen height (a quarter while typing) so tasks fit below it.
+  const share = document.documentElement.classList.contains('typing') ? 0.25 : 0.4;
+  const scale = Math.min(1, (document.documentElement.clientWidth - 24) / 420, (window.innerHeight * share) / 550);
   document.documentElement.style.setProperty('--dev-scale', scale.toFixed(3));
 }
 /** @returns {void} */
@@ -1537,6 +1551,30 @@ function initPhone() {
   setTab(TABS.some(t => t[0] === saved) ? saved : 'tasks');
   fitDevice();
   window.addEventListener('resize', fitDevice);
+  // Shrink the device while a text box or list picker is in use, and grow it back afterwards.
+  let typingTimer = null;
+  document.addEventListener('focusin', e => {
+    if (!(e.target instanceof Element) || !e.target.matches('input, select, textarea')) return;
+    clearTimeout(typingTimer);
+    document.documentElement.classList.add('typing'); fitDevice();
+  });
+  document.addEventListener('focusout', () => {
+    typingTimer = setTimeout(() => {
+      if (document.activeElement && document.activeElement.matches('input, select, textarea')) return;
+      document.documentElement.classList.remove('typing'); fitDevice();
+    }, 150);
+  });
+}
+
+/* ============ Wide-screen layout ============ */
+const WIDE = window.matchMedia('(min-width: 921px)');
+/** On wide screens, put Vitals at the top of the task column so the pinned device column holds only the device.
+ * @returns {void} */
+function placeVitals() {
+  if (WIDGET || PHONE) return;
+  const vitals = $('#secVitals');
+  if (WIDE.matches) $('#rightStack').insertBefore(vitals, $('#wbar').nextSibling);
+  else $('#deviceWrap').after(vitals);
 }
 
 /* ============ Boot ============ */
@@ -1544,6 +1582,8 @@ function initPhone() {
   const returned = takeRedirectToken();
   initWidget();
   initPhone();
+  placeVitals();
+  WIDE.addEventListener('change', placeVitals);
   buildIcons();
   tick(); render(); renderTasks();
   if (returned && 'error' in returned) showBanner(returned.error, 'Try again', connectGoogle);
