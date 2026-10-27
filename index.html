@@ -1,0 +1,1441 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Archie</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+  :root {
+    --bg: #dcefed; --card: #fffdf6; --ink: #1e2b3a; --muted: #4a5866; --line: #1e2b3a; --shadow: #1e2b3a; --field: #f2efe3;
+    --good: #1f6347; --good-line: #2f7d5b; --bad: #b3311f; --warn-ink: #9a5f00; --dots: rgba(30,43,58,.13);
+    --primary-bg: #1e2b3a; --primary-ink: #fffdf6; --on-bg: #1e2b3a; --on-ink: #fffdf6;
+    --shell: #2f6fa3; --lcd: #b9c4a6; --lcd-off: #a9b594; --lcd-ink: #222a1e;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #12202b; --card: #1b2d3c; --ink: #e9f1ee; --muted: #b3c3cc; --line: #e9f1ee; --shadow: #04080c; --field: #142431;
+      --good: #9fe0bd; --good-line: #7fd1a8; --bad: #ff9b88; --warn-ink: #f6c945; --dots: rgba(233,241,238,.09);
+      --primary-bg: #f6c945; --primary-ink: #1e2b3a; --on-bg: #f6c945; --on-ink: #1e2b3a;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #12202b; --card: #1b2d3c; --ink: #e9f1ee; --muted: #b3c3cc; --line: #e9f1ee; --shadow: #04080c; --field: #142431;
+    --good: #9fe0bd; --good-line: #7fd1a8; --bad: #ff9b88; --warn-ink: #f6c945; --dots: rgba(233,241,238,.09);
+    --primary-bg: #f6c945; --primary-ink: #1e2b3a; --on-bg: #f6c945; --on-ink: #1e2b3a;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body { margin: 0; min-height: 100vh; color: var(--ink); background-color: var(--bg);
+    background-image: radial-gradient(circle at 2px 2px, var(--dots) 1.6px, transparent 1.8px); background-size: 18px 18px;
+    font-family: 'VT323', ui-monospace, monospace; font-size: 21px; line-height: 1.15; }
+  button, input, select { font: inherit; color: inherit; }
+  .px { font-family: 'Press Start 2P', ui-monospace, monospace; font-weight: 400; }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+  header { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; max-width: 1200px; margin: 0 auto; padding: 28px 16px 20px; }
+  .brand { display: flex; align-items: center; gap: 14px; margin-right: auto; }
+  .logo { position: relative; width: 48px; height: 48px; flex: none; background: var(--card); border: 3px solid var(--line); box-shadow: 3px 3px 0 var(--shadow); box-sizing: content-box; color: var(--ink); }
+  header h1 { margin: 0; font-size: 22px; letter-spacing: 2px; }
+  .tagline { color: var(--muted); font-size: 20px; margin-top: 4px; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; border: 2px solid var(--line); padding: 2px 10px; font-size: 19px; background: var(--field); color: var(--ink); }
+  .chip.live { border-color: var(--good-line); color: var(--good); }
+  .btn { font-size: 20px; color: var(--ink); background: var(--card); border: 3px solid var(--line); box-shadow: 3px 3px 0 var(--shadow); padding: 6px 14px; cursor: pointer; min-height: 44px; }
+  .btn:active { transform: translate(3px, 3px); box-shadow: none; }
+  .btn.primary { background: var(--primary-bg); color: var(--primary-ink); border-color: var(--primary-bg); }
+  .btn:disabled { opacity: .5; cursor: default; }
+  .btn[hidden] { display: none; }
+
+  .banner { max-width: 1200px; margin: 0 auto 20px; padding: 0 16px; display: none; }
+  .banner.show { display: block; }
+  .banner-in { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 12px 16px; background: var(--card); border: 3px solid var(--line); box-shadow: 4px 4px 0 var(--shadow); }
+  .banner-in span { flex: 1; min-width: 200px; }
+
+  .app { max-width: 1200px; margin: 0 auto; padding: 0 16px 56px; display: grid; gap: 32px 36px; grid-template-columns: 420px minmax(0, 1fr); align-items: start; }
+  @media (max-width: 920px) { .app { grid-template-columns: minmax(0, 1fr); } }
+  .stack { display: flex; flex-direction: column; gap: 32px; min-width: 0; }
+
+  /* Device: an egg-pet shell with a nautical print */
+  .device { position: relative; width: 420px; height: 550px; margin: 0 auto; }
+  .device > svg { position: absolute; left: 0; top: 0; }
+  .device-name { position: absolute; top: 84px; left: 0; right: 0; text-align: center; font-size: 14px; letter-spacing: 3px; color: #fffdf6; text-shadow: 2px 2px 0 #1e2b3a; }
+  .face { position: absolute; left: 70px; top: 124px; width: 280px; height: 272px; display: flex; align-items: center; justify-content: center; }
+  .lcd { width: 248px; padding: 4px 9px; background: var(--lcd); border: 3px solid #1e2b3a; border-radius: 12px; box-shadow: inset 0 4px 0 rgba(0,0,0,.12); }
+  .icons { display: flex; justify-content: space-between; height: 30px; }
+  .seg { width: 44px; height: 30px; display: grid; place-items: center; background: none; border: 0; padding: 0; cursor: pointer; opacity: .2; }
+  .seg.on { opacity: 1; }
+  .seg:focus-visible, .abtn:focus-visible, .matrix:focus-visible { outline: 3px solid #f6c945; outline-offset: 2px; }
+  span.seg { cursor: default; }
+  .seg i { position: relative; width: 21px; height: 21px; }
+  .matrix { position: relative; width: 224px; height: 168px; overflow: hidden; cursor: pointer; background-color: var(--lcd-off);
+    background-image: linear-gradient(to right, transparent 6px, var(--lcd) 6px), linear-gradient(to bottom, transparent 6px, var(--lcd) 6px); background-size: 7px 7px; }
+  .pix { position: absolute; left: -7px; top: -7px; width: 6px; height: 6px; }
+  .ipix { position: absolute; left: -3px; top: -3px; width: 2px; height: 2px; }
+  .hpix { position: absolute; left: -3px; top: -3px; width: 3px; height: 3px; }
+  .rpix { position: absolute; left: -2px; top: -2px; width: 2px; height: 2px; }
+  .hopper, .spr { position: absolute; inset: 0; }
+  .moodicon { position: absolute; left: 168px; top: 7px; width: 49px; height: 49px; visibility: hidden; }
+  .matrix.showmood .moodicon { visibility: visible; }
+  .abtn { position: absolute; width: 48px; height: 48px; border-radius: 50%; border: 3px solid #1e2b3a; cursor: pointer; color: #1e2b3a;
+    background: radial-gradient(circle at 36% 32%, #ffd3c8 0 18%, #f28c78 19% 100%); box-shadow: 0 5px 0 #1e2b3a; font-family: 'Press Start 2P', monospace; font-size: 11px; }
+  .abtn:active { transform: translateY(4px); box-shadow: 0 1px 0 #1e2b3a; }
+  .abtn:disabled { filter: grayscale(.6); cursor: default; }
+  .alabel { position: absolute; width: 72px; text-align: center; font-family: 'Press Start 2P', monospace; font-size: 8px; line-height: 1.6; color: #fffdf6;
+    text-shadow: 1px 1px 0 #1e2b3a, -1px -1px 0 #1e2b3a, 1px -1px 0 #1e2b3a, -1px 1px 0 #1e2b3a; pointer-events: none; }
+  .msg { position: relative; margin: 18px auto 0; max-width: 380px; padding: 12px 16px; background: var(--card); border: 3px solid var(--line); box-shadow: 4px 4px 0 var(--shadow); text-align: center; font-size: 22px; min-height: 52px; }
+  .msg::before { content: ""; position: absolute; top: -12px; left: 50%; margin-left: -9px; width: 14px; height: 14px; background: var(--card); border-left: 3px solid var(--line); border-top: 3px solid var(--line); transform: rotate(45deg); }
+  @media (max-width: 460px) { html:not(.widget) .device { transform: scale(.8); transform-origin: top left; margin-left: calc(50% - 168px); margin-bottom: -110px; } }
+
+  /* pet motion: one LCD pixel per tick, every move and frame flip on the same beat */
+  .mover{position:absolute;left:0;top:0;width:112px;height:112px}
+  /* calm moods roam the whole screen (0.4s tick); lively moods tick faster; low moods sink and drift (0.6s tick) */
+  .m-content .mover{animation:swim 20s steps(1,end) infinite}
+  .m-worried .mover,.m-happy .mover{animation:swim 15s steps(1,end) infinite}
+  .m-hungry .mover,.m-sad .mover,.m-sick .mover{animation:drift 24s steps(1,end) infinite}
+  .m-happy .hopper{animation:hop .6s steps(1,end) infinite}
+  .fa{position:absolute;inset:0;animation:fa .8s steps(1,end) infinite}
+  .fb{position:absolute;inset:0;animation:fb .8s steps(1,end) infinite}
+  .m-happy .fa,.m-happy .fb,.m-worried .fa,.m-worried .fb{animation-duration:.6s}
+  .m-hungry .fa,.m-hungry .fb,.m-sad .fa,.m-sad .fb,.m-sick .fa,.m-sick .fb,.egg .fa,.egg .fb{animation-duration:1.2s}
+  .m-fainted .fa{animation:none;opacity:1}
+  .m-fainted .fb{display:none}
+  .m-fainted .spr{transform:rotate(90deg)}
+  .blink{animation:fa 1.2s steps(1,end) infinite}
+  @keyframes swim{
+    0%{transform:translate(7px,35px)}2%{transform:translate(7px,35px)}4%{transform:translate(7px,28px)}6%{transform:translate(14px,28px)}
+    8%{transform:translate(14px,21px)}10%{transform:translate(21px,21px)}12%{transform:translate(21px,14px)}14%{transform:translate(28px,14px)}
+    16%{transform:translate(35px,14px)}18%{transform:translate(35px,7px)}20%{transform:translate(42px,7px)}22%{transform:translate(49px,7px)}
+    24%{transform:translate(49px,7px)}26%{transform:translate(56px,7px)}28%{transform:translate(56px,14px)}30%{transform:translate(56px,21px)}
+    32%{transform:translate(56px,28px)}34%{transform:translate(49px,28px)}36%{transform:translate(49px,35px)}38%{transform:translate(49px,42px)}
+    40%{transform:translate(56px,42px)}42%{transform:translate(56px,49px)}44%{transform:translate(56px,56px)}46%{transform:translate(63px,56px)}
+    48%{transform:translate(70px,56px)}50%{transform:translate(77px,56px)}52%{transform:translate(84px,56px)}54%{transform:translate(91px,56px)}
+    56%{transform:translate(98px,56px)}58%{transform:translate(105px,56px)}60%{transform:translate(112px,56px)}62%{transform:translate(112px,56px)}
+    64%{transform:translate(112px,56px)}66%{transform:translate(105px,56px)}68%{transform:translate(98px,56px)}70%{transform:translate(91px,56px)}
+    72%{transform:translate(84px,56px)}74%{transform:translate(77px,56px)}76%{transform:translate(70px,56px)}78%{transform:translate(63px,56px)}
+    80%{transform:translate(56px,56px)}82%{transform:translate(56px,49px)}84%{transform:translate(49px,49px)}86%{transform:translate(49px,42px)}
+    88%{transform:translate(42px,42px)}90%{transform:translate(35px,42px)}92%{transform:translate(28px,42px)}94%{transform:translate(21px,42px)}
+    96%{transform:translate(21px,35px)}98%{transform:translate(14px,35px)}100%{transform:translate(7px,35px)}}
+  @keyframes drift{
+    0%{transform:translate(0px,56px)}2.5%{transform:translate(7px,56px)}5%{transform:translate(14px,56px)}7.5%{transform:translate(14px,49px)}
+    10%{transform:translate(21px,49px)}12.5%{transform:translate(28px,49px)}15%{transform:translate(28px,56px)}17.5%{transform:translate(35px,56px)}
+    20%{transform:translate(42px,56px)}22.5%{transform:translate(49px,56px)}25%{transform:translate(56px,56px)}27.5%{transform:translate(63px,56px)}
+    30%{transform:translate(70px,56px)}32.5%{transform:translate(77px,56px)}35%{transform:translate(84px,56px)}37.5%{transform:translate(91px,56px)}
+    40%{transform:translate(98px,56px)}42.5%{transform:translate(105px,56px)}45%{transform:translate(112px,56px)}47.5%{transform:translate(112px,56px)}
+    50%{transform:translate(105px,56px)}52.5%{transform:translate(98px,56px)}55%{transform:translate(91px,56px)}57.5%{transform:translate(84px,56px)}
+    60%{transform:translate(77px,56px)}62.5%{transform:translate(70px,56px)}65%{transform:translate(63px,56px)}67.5%{transform:translate(56px,56px)}
+    70%{transform:translate(49px,56px)}72.5%{transform:translate(42px,56px)}75%{transform:translate(42px,49px)}77.5%{transform:translate(35px,49px)}
+    80%{transform:translate(28px,49px)}82.5%{transform:translate(28px,56px)}85%{transform:translate(21px,56px)}87.5%{transform:translate(14px,56px)}
+    90%{transform:translate(7px,56px)}92.5%{transform:translate(0px,56px)}95%{transform:translate(0px,56px)}97.5%{transform:translate(0px,56px)}
+    100%{transform:translate(0px,56px)}}
+  /* Hatchling turns: front most of the time, sideways while cruising the seafloor, its back briefly at the surface (swim) or while sulking low (drift). Every view has two frames that flip on the shared tick. */
+  .fl,.fl2,.fr,.fr2,.fk,.fk2{position:absolute;inset:0;opacity:0;display:none}
+  .turns .fl,.turns .fl2,.turns .fr,.turns .fr2,.turns .fk,.turns .fk2{display:block}
+  .turns.m-content .fa{animation:sw-f1 20s steps(1,end) infinite}
+  .turns.m-content .fb{animation:sw-f2 20s steps(1,end) infinite}
+  .turns.m-content .fl{animation:sw-l1 20s steps(1,end) infinite}
+  .turns.m-content .fl2{animation:sw-l2 20s steps(1,end) infinite}
+  .turns.m-content .fr{animation:sw-r1 20s steps(1,end) infinite}
+  .turns.m-content .fr2{animation:sw-r2 20s steps(1,end) infinite}
+  .turns.m-content .fk{animation:sw-k1 20s steps(1,end) infinite}
+  .turns.m-content .fk2{animation:sw-k2 20s steps(1,end) infinite}
+  .turns.m-happy .fa,.turns.m-worried .fa{animation:sw-f1 15s steps(1,end) infinite}
+  .turns.m-happy .fb,.turns.m-worried .fb{animation:sw-f2 15s steps(1,end) infinite}
+  .turns.m-happy .fl,.turns.m-worried .fl{animation:sw-l1 15s steps(1,end) infinite}
+  .turns.m-happy .fl2,.turns.m-worried .fl2{animation:sw-l2 15s steps(1,end) infinite}
+  .turns.m-happy .fr,.turns.m-worried .fr{animation:sw-r1 15s steps(1,end) infinite}
+  .turns.m-happy .fr2,.turns.m-worried .fr2{animation:sw-r2 15s steps(1,end) infinite}
+  .turns.m-happy .fk,.turns.m-worried .fk{animation:sw-k1 15s steps(1,end) infinite}
+  .turns.m-happy .fk2,.turns.m-worried .fk2{animation:sw-k2 15s steps(1,end) infinite}
+  .turns.m-hungry .fa,.turns.m-sad .fa,.turns.m-sick .fa{animation:dr-f1 24s steps(1,end) infinite}
+  .turns.m-hungry .fb,.turns.m-sad .fb,.turns.m-sick .fb{animation:dr-f2 24s steps(1,end) infinite}
+  .turns.m-hungry .fl,.turns.m-sad .fl,.turns.m-sick .fl{animation:dr-l1 24s steps(1,end) infinite}
+  .turns.m-hungry .fl2,.turns.m-sad .fl2,.turns.m-sick .fl2{animation:dr-l2 24s steps(1,end) infinite}
+  .turns.m-hungry .fr,.turns.m-sad .fr,.turns.m-sick .fr{animation:dr-r1 24s steps(1,end) infinite}
+  .turns.m-hungry .fr2,.turns.m-sad .fr2,.turns.m-sick .fr2{animation:dr-r2 24s steps(1,end) infinite}
+  .turns.m-hungry .fk,.turns.m-sad .fk,.turns.m-sick .fk{animation:dr-k1 24s steps(1,end) infinite}
+  .turns.m-hungry .fk2,.turns.m-sad .fk2,.turns.m-sick .fk2{animation:dr-k2 24s steps(1,end) infinite}
+  @keyframes sw-f1{0%{opacity:1}2%{opacity:0}4%{opacity:1}6%{opacity:0}8%{opacity:1}10%{opacity:0}12%{opacity:1}14%{opacity:0}16%{opacity:1}18%{opacity:0}28%{opacity:1}30%{opacity:0}32%{opacity:1}34%{opacity:0}36%{opacity:1}38%{opacity:0}40%{opacity:1}42%{opacity:0}44%{opacity:1}46%{opacity:0}64%{opacity:1}66%{opacity:0}84%{opacity:1}86%{opacity:0}88%{opacity:1}90%{opacity:0}92%{opacity:1}94%{opacity:0}96%{opacity:1}98%{opacity:0}100%{opacity:0}}
+  @keyframes sw-f2{0%{opacity:0}2%{opacity:1}4%{opacity:0}6%{opacity:1}8%{opacity:0}10%{opacity:1}12%{opacity:0}14%{opacity:1}16%{opacity:0}18%{opacity:1}20%{opacity:0}26%{opacity:1}28%{opacity:0}30%{opacity:1}32%{opacity:0}34%{opacity:1}36%{opacity:0}38%{opacity:1}40%{opacity:0}42%{opacity:1}44%{opacity:0}62%{opacity:1}64%{opacity:0}82%{opacity:1}84%{opacity:0}86%{opacity:1}88%{opacity:0}90%{opacity:1}92%{opacity:0}94%{opacity:1}96%{opacity:0}98%{opacity:1}100%{opacity:1}}
+  @keyframes sw-l1{0%{opacity:0}68%{opacity:1}70%{opacity:0}72%{opacity:1}74%{opacity:0}76%{opacity:1}78%{opacity:0}80%{opacity:1}82%{opacity:0}100%{opacity:0}}
+  @keyframes sw-l2{0%{opacity:0}66%{opacity:1}68%{opacity:0}70%{opacity:1}72%{opacity:0}74%{opacity:1}76%{opacity:0}78%{opacity:1}80%{opacity:0}100%{opacity:0}}
+  @keyframes sw-r1{0%{opacity:0}48%{opacity:1}50%{opacity:0}52%{opacity:1}54%{opacity:0}56%{opacity:1}58%{opacity:0}60%{opacity:1}62%{opacity:0}100%{opacity:0}}
+  @keyframes sw-r2{0%{opacity:0}46%{opacity:1}48%{opacity:0}50%{opacity:1}52%{opacity:0}54%{opacity:1}56%{opacity:0}58%{opacity:1}60%{opacity:0}100%{opacity:0}}
+  @keyframes sw-k1{0%{opacity:0}20%{opacity:1}22%{opacity:0}24%{opacity:1}26%{opacity:0}100%{opacity:0}}
+  @keyframes sw-k2{0%{opacity:0}22%{opacity:1}24%{opacity:0}100%{opacity:0}}
+  @keyframes dr-f1{0%{opacity:1}2.5%{opacity:0}5%{opacity:1}7.5%{opacity:0}10%{opacity:1}12.5%{opacity:0}15%{opacity:1}17.5%{opacity:0}20%{opacity:1}22.5%{opacity:0}25%{opacity:1}27.5%{opacity:0}45%{opacity:1}47.5%{opacity:0}50%{opacity:1}52.5%{opacity:0}70%{opacity:1}72.5%{opacity:0}75%{opacity:1}77.5%{opacity:0}85%{opacity:1}87.5%{opacity:0}90%{opacity:1}92.5%{opacity:0}95%{opacity:1}97.5%{opacity:0}100%{opacity:0}}
+  @keyframes dr-f2{0%{opacity:0}2.5%{opacity:1}5%{opacity:0}7.5%{opacity:1}10%{opacity:0}12.5%{opacity:1}15%{opacity:0}17.5%{opacity:1}20%{opacity:0}22.5%{opacity:1}25%{opacity:0}47.5%{opacity:1}50%{opacity:0}72.5%{opacity:1}75%{opacity:0}82.5%{opacity:1}85%{opacity:0}87.5%{opacity:1}90%{opacity:0}92.5%{opacity:1}95%{opacity:0}97.5%{opacity:1}100%{opacity:1}}
+  @keyframes dr-l1{0%{opacity:0}55%{opacity:1}57.5%{opacity:0}60%{opacity:1}62.5%{opacity:0}65%{opacity:1}67.5%{opacity:0}100%{opacity:0}}
+  @keyframes dr-l2{0%{opacity:0}52.5%{opacity:1}55%{opacity:0}57.5%{opacity:1}60%{opacity:0}62.5%{opacity:1}65%{opacity:0}67.5%{opacity:1}70%{opacity:0}100%{opacity:0}}
+  @keyframes dr-r1{0%{opacity:0}30%{opacity:1}32.5%{opacity:0}35%{opacity:1}37.5%{opacity:0}40%{opacity:1}42.5%{opacity:0}100%{opacity:0}}
+  @keyframes dr-r2{0%{opacity:0}27.5%{opacity:1}30%{opacity:0}32.5%{opacity:1}35%{opacity:0}37.5%{opacity:1}40%{opacity:0}42.5%{opacity:1}45%{opacity:0}100%{opacity:0}}
+  @keyframes dr-k1{0%{opacity:0}80%{opacity:1}82.5%{opacity:0}100%{opacity:0}}
+  @keyframes dr-k2{0%{opacity:0}77.5%{opacity:1}80%{opacity:0}100%{opacity:0}}
+  /* Three-frame front (Inkling): tentacles alternate every tick while the expression changes only every fourth tick. Turn views keep their two frames. */
+  .fc{position:absolute;inset:0;opacity:0;display:none}
+  .three .fc{display:block}
+  .turns.three.m-content .fa{animation:sw3-a 20s steps(1,end) infinite}
+  .turns.three.m-happy .fa,.turns.three.m-worried .fa{animation:sw3-a 15s steps(1,end) infinite}
+  .turns.three.m-hungry .fa,.turns.three.m-sad .fa,.turns.three.m-sick .fa{animation:dr3-a 24s steps(1,end) infinite}
+  .turns.three.m-content .fb{animation:sw3-b 20s steps(1,end) infinite}
+  .turns.three.m-happy .fb,.turns.three.m-worried .fb{animation:sw3-b 15s steps(1,end) infinite}
+  .turns.three.m-hungry .fb,.turns.three.m-sad .fb,.turns.three.m-sick .fb{animation:dr3-b 24s steps(1,end) infinite}
+  .turns.three.m-content .fc{animation:sw3-c 20s steps(1,end) infinite}
+  .turns.three.m-happy .fc,.turns.three.m-worried .fc{animation:sw3-c 15s steps(1,end) infinite}
+  .turns.three.m-hungry .fc,.turns.three.m-sad .fc,.turns.three.m-sick .fc{animation:dr3-c 24s steps(1,end) infinite}
+  @keyframes sw3-a{0%{opacity:1}2%{opacity:0}4%{opacity:1}6%{opacity:0}8%{opacity:1}10%{opacity:0}12%{opacity:1}14%{opacity:0}16%{opacity:1}18%{opacity:0}28%{opacity:1}30%{opacity:0}32%{opacity:1}34%{opacity:0}36%{opacity:1}38%{opacity:0}40%{opacity:1}42%{opacity:0}44%{opacity:1}46%{opacity:0}64%{opacity:1}66%{opacity:0}84%{opacity:1}86%{opacity:0}88%{opacity:1}90%{opacity:0}92%{opacity:1}94%{opacity:0}96%{opacity:1}98%{opacity:0}100%{opacity:0}}
+  @keyframes sw3-b{0%{opacity:0}6%{opacity:1}8%{opacity:0}14%{opacity:1}16%{opacity:0}30%{opacity:1}32%{opacity:0}38%{opacity:1}40%{opacity:0}62%{opacity:1}64%{opacity:0}86%{opacity:1}88%{opacity:0}94%{opacity:1}96%{opacity:0}100%{opacity:0}}
+  @keyframes sw3-c{0%{opacity:0}2%{opacity:1}4%{opacity:0}10%{opacity:1}12%{opacity:0}18%{opacity:1}20%{opacity:0}26%{opacity:1}28%{opacity:0}34%{opacity:1}36%{opacity:0}42%{opacity:1}44%{opacity:0}82%{opacity:1}84%{opacity:0}90%{opacity:1}92%{opacity:0}98%{opacity:1}100%{opacity:1}}
+  @keyframes dr3-a{0%{opacity:1}2.5%{opacity:0}5%{opacity:1}7.5%{opacity:0}10%{opacity:1}12.5%{opacity:0}15%{opacity:1}17.5%{opacity:0}20%{opacity:1}22.5%{opacity:0}25%{opacity:1}27.5%{opacity:0}45%{opacity:1}47.5%{opacity:0}50%{opacity:1}52.5%{opacity:0}70%{opacity:1}72.5%{opacity:0}75%{opacity:1}77.5%{opacity:0}85%{opacity:1}87.5%{opacity:0}90%{opacity:1}92.5%{opacity:0}95%{opacity:1}97.5%{opacity:0}100%{opacity:0}}
+  @keyframes dr3-b{0%{opacity:0}7.5%{opacity:1}10%{opacity:0}17.5%{opacity:1}20%{opacity:0}47.5%{opacity:1}50%{opacity:0}87.5%{opacity:1}90%{opacity:0}97.5%{opacity:1}100%{opacity:1}}
+  @keyframes dr3-c{0%{opacity:0}2.5%{opacity:1}5%{opacity:0}12.5%{opacity:1}15%{opacity:0}22.5%{opacity:1}25%{opacity:0}72.5%{opacity:1}75%{opacity:0}82.5%{opacity:1}85%{opacity:0}92.5%{opacity:1}95%{opacity:0}100%{opacity:0}}
+  @keyframes hop{0%{transform:translateY(0)}50%{transform:translateY(-7px)}100%{transform:translateY(-7px)}}
+  @keyframes fa{0%{opacity:1}50%{opacity:0}100%{opacity:0}}
+  @keyframes fb{0%{opacity:0}50%{opacity:1}100%{opacity:1}}
+  @media (prefers-reduced-motion:reduce){.mover,.hopper,.fb,.fc,.fl,.fl2,.fr,.fr2,.fk,.fk2,.blink{animation:none!important}.fc,.fl,.fl2,.fr,.fr2,.fk,.fk2{opacity:0!important}.fa{animation:none!important;opacity:1}.fb{opacity:0}}
+  /* one-off reactions: a quick hop when fed or patted, a flicker when evolving */
+  .matrix.jump .hopper { animation: hop .3s steps(1, end) 4 !important; }
+  .matrix.evolve .spr { animation: evo .3s steps(1, end) 8; }
+  @keyframes evo { 0% { opacity: 1; } 50% { opacity: 0; } 100% { opacity: 0; } }
+
+  /* Widget layouts (Mac app, or any browser with ?widget in the address).
+     compact: just the device on a transparent background; open: device + tasks panel; full: the normal page. */
+  .wbar, .device-hit { display: none; }
+  html.widget .wbar { display: flex; justify-content: flex-end; gap: 8px; }
+  html.widget.compact, html.widget.compact body, html.widget.open, html.widget.open body { background: transparent; background-image: none; overflow: hidden; }
+  html.widget.compact header, html.widget.compact .banner, html.widget.compact .msg, html.widget.compact #secVitals,
+  html.widget.compact .app > .stack:last-child { display: none !important; }
+  html.widget.compact .app, html.widget.open .app { display: grid; margin: 0; padding: 0; max-width: none; gap: 0 24px; }
+  html.widget.compact .app { grid-template-columns: 420px; }
+  html.widget.compact .device { margin: 0; }
+  html.widget.compact .device-hit { display: block; position: absolute; inset: 0; z-index: 5; background: transparent; border: 0; padding: 0; cursor: pointer; border-radius: 40px; }
+  html.widget.open header, html.widget.open #secRecurring, html.widget.open #secLog { display: none; }
+  html.widget.open .app { grid-template-columns: 420px 456px; height: 100vh; }
+  html.widget.open .device { margin: 0; }
+  html.widget.open .msg { margin: 14px 10px 0; }
+  html.widget.open .app > .stack:last-child { height: 100vh; overflow-y: auto; padding: 12px 12px 24px 4px; gap: 20px; }
+  html.widget.open .banner { position: fixed; top: 56px; right: 12px; width: 440px; padding: 0; z-index: 10; }
+  html.widget.full header { cursor: grab; }
+
+  /* Cards */
+  .card { background: var(--card); border: 3px solid var(--line); box-shadow: 6px 6px 0 var(--shadow); scroll-margin-top: 16px; }
+  .card.flash { animation: cardflash .25s steps(1, end) 4; }
+  @keyframes cardflash { 50% { box-shadow: 6px 6px 0 #f6c945; } }
+  .card-h { margin: 0; padding: 10px 14px; border-bottom: 3px solid var(--line); font-size: 12px; letter-spacing: 1px; color: #1e2b3a; }
+  .card-b { padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 10px; }
+  .namerow { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+  .name { font-size: 24px; background: none; border: 0; padding: 0; min-height: 44px; cursor: pointer; text-decoration: underline dotted; text-underline-offset: 4px; }
+  .stage { font-size: 11px; color: var(--muted); }
+  .stat { display: grid; grid-template-columns: 116px 1fr 40px; align-items: center; gap: 10px; }
+  .hearts { display: flex; gap: 6px; color: var(--ink); }
+  .hearts.low { color: var(--bad); }
+  .hearts i { position: relative; width: 21px; height: 18px; }
+  .num { text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+  .next, .subtle { color: var(--muted); }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .field { font-size: 20px; color: var(--ink); background: var(--field); border: 3px solid var(--line); padding: 6px 10px; min-height: 44px; min-width: 0; border-radius: 0; }
+  .field::placeholder { color: var(--muted); }
+  select.field { flex: 1 1 200px; max-width: 100%; }
+  .grow { flex: 1 1 200px; }
+  ul.tasks, ul.orders, ul.log { list-style: none; margin: 0; padding: 0; }
+  ul.tasks li, ul.orders li { display: flex; align-items: center; gap: 12px; padding: 6px 0; border-bottom: 2px dashed var(--line); min-height: 50px; }
+  ul.tasks li.overdue .ttitle { color: var(--bad); }
+  .ttitle { flex: 1; overflow-wrap: anywhere; }
+  .check { flex: none; width: 26px; height: 26px; border: 3px solid var(--line); background: var(--field); cursor: pointer; padding: 0; box-shadow: 2px 2px 0 var(--shadow); }
+  .check:hover { background: #8fd3c1; }
+  .check:disabled { opacity: .4; }
+  .due { font-size: 18px; border: 2px solid var(--line); padding: 0 8px; white-space: nowrap; color: var(--muted); }
+  .due.late { background: #c2412d; color: #fff; border-color: #c2412d; }
+  .due.today { background: #f6c945; color: #1e2b3a; border-color: #f6c945; }
+  .due.done { background: #2f7d5b; color: #fff; border-color: #2f7d5b; }
+  .rt { flex: none; width: 44px; height: 44px; display: grid; place-items: center; background: none; border: 2px solid transparent; cursor: pointer; padding: 0; opacity: .55; color: var(--ink); }
+  .rt:hover { opacity: 1; border-color: var(--line); }
+  .rt.on { opacity: 1; background: var(--on-bg); border-color: var(--on-bg); color: var(--on-ink); }
+  .rt i, .order-icon { position: relative; width: 14px; height: 14px; flex: none; }
+  .order-icon { color: var(--ink); }
+  .x { flex: none; width: 44px; height: 44px; font-size: 26px; background: none; border: 0; color: var(--muted); cursor: pointer; }
+  .x:hover { color: var(--ink); }
+  .empty { color: var(--muted); justify-content: center; text-align: center; border-bottom: 0 !important; }
+  .orders-sum { margin: 4px 0 0; color: var(--muted); }
+  .orders-sum.ok { color: var(--good); }
+  .orders-sum.wait { color: var(--warn-ink); }
+  ul.log { display: flex; flex-direction: column; gap: 6px; }
+  ul.log time { color: var(--muted); margin-right: 10px; }
+  .link { background: none; border: 0; padding: 0; color: var(--muted); text-decoration: underline; cursor: pointer; min-height: 44px; align-self: flex-start; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="logo" aria-hidden="true"><span id="logoPix" class="hpix"></span></div>
+    <div><h1 class="px">ARCHIE</h1><div class="tagline">Feed it your to-dos</div></div>
+  </div>
+  <span id="modeChip" class="chip">Demo mode</span>
+  <span id="cloudChip" class="chip" hidden></span>
+  <button id="connectBtn" class="btn primary">Connect Google Tasks</button>
+  <button id="demoBtn" class="btn">Use demo tasks</button>
+</header>
+
+<div id="banner" class="banner" role="status"><div class="banner-in"><span id="bannerText"></span><button id="bannerBtn" class="btn primary" hidden></button><button id="bannerClose" class="btn">Dismiss</button></div></div>
+
+<main class="app">
+  <div class="stack">
+    <div id="deviceWrap">
+      <div class="device">
+        <svg width="420" height="550" viewBox="0 0 420 550" aria-hidden="true">
+          <defs>
+            <pattern id="seaPrint" width="72" height="56" patternUnits="userSpaceOnUse">
+              <path d="M0 47 q9 -9 18 0 t18 0 t18 0 t18 0" fill="none" stroke="#f6ebd3" stroke-width="3" stroke-linecap="round" opacity=".5"/>
+              <g fill="none" stroke="#f6ebd3" stroke-width="2.5" stroke-linecap="round" opacity=".45"><circle cx="16" cy="9" r="3"/><path d="M16 12 V30 M10 17 H22 M8 23 Q16 34 24 23"/></g>
+              <path d="M51 9 l2.5 6.5 6.5 2.5 -6.5 2.5 -2.5 6.5 -2.5 -6.5 -6.5 -2.5 6.5 -2.5z" fill="#f6ebd3" opacity=".45"/>
+            </pattern>
+            <clipPath id="shellClip"><path d="M122 30 H298 C352 30 372 46 376 92 L404 418 C410 502 374 540 312 540 H108 C46 540 10 502 16 418 L44 92 C48 46 68 30 122 30 Z"/></clipPath>
+          </defs>
+          <circle cx="210" cy="16" r="11" fill="none" stroke="#1e2b3a" stroke-width="9"/>
+          <circle cx="210" cy="16" r="11" fill="none" stroke="#d7dce3" stroke-width="4"/>
+          <path d="M122 30 H298 C352 30 372 46 376 92 L404 418 C410 502 374 540 312 540 H108 C46 540 10 502 16 418 L44 92 C48 46 68 30 122 30 Z" fill="var(--shell)"/>
+          <path d="M122 30 H298 C352 30 372 46 376 92 L404 418 C410 502 374 540 312 540 H108 C46 540 10 502 16 418 L44 92 C48 46 68 30 122 30 Z" fill="url(#seaPrint)"/>
+          <ellipse cx="84" cy="150" rx="18" ry="70" transform="rotate(-5 84 150)" fill="#ffffff" opacity=".18" clip-path="url(#shellClip)"/>
+          <path d="M122 30 H298 C352 30 372 46 376 92 L404 418 C410 502 374 540 312 540 H108 C46 540 10 502 16 418 L44 92 C48 46 68 30 122 30 Z" fill="none" stroke="#1e2b3a" stroke-width="5"/>
+          <path d="M104 120 H316 C344 120 354 131 356 157 L368 358 C370 386 354 400 326 400 H94 C66 400 50 386 52 358 L64 157 C66 131 76 120 104 120 Z" fill="#f4ecd8" stroke="#1e2b3a" stroke-width="4"/>
+          <path d="M108 130 H312 C335 130 344 139 346 160 L357 356 C358 378 346 390 323 390 H97 C74 390 62 378 63 356 L74 160 C76 139 85 130 108 130 Z" fill="none" stroke="#c99a5b" stroke-width="3" stroke-dasharray="7 5"/>
+        </svg>
+        <div class="device-name px" aria-hidden="true">ARCHIE</div>
+        <button id="deviceHit" class="device-hit" aria-label="Open Archie: show buttons and tasks" title="Click to open"></button>
+        <div class="face">
+          <div class="lcd">
+            <div class="icons" id="iconsTop"></div>
+            <div id="pet" class="matrix" role="button" tabindex="0" aria-label="Your pet. Press to give it a pat.">
+              <div class="mover" id="mover">
+                <div class="hopper">
+                  <div class="spr">
+                    <div class="fa"><span class="pix"></span></div>
+                    <div class="fb"><span class="pix"></span></div>
+                    <div class="fc"><span class="pix"></span></div>
+                    <div class="fl"><span class="pix"></span></div>
+                    <div class="fl2"><span class="pix"></span></div>
+                    <div class="fr"><span class="pix"></span></div>
+                    <div class="fr2"><span class="pix"></span></div>
+                    <div class="fk"><span class="pix"></span></div>
+                    <div class="fk2"><span class="pix"></span></div>
+                  </div>
+                </div>
+              </div>
+              <div class="moodicon" aria-hidden="true"><span id="moodPix" class="pix"></span></div>
+            </div>
+            <div class="icons" id="iconsBottom"></div>
+          </div>
+        </div>
+        <button class="abtn" id="patBtn" style="left: 115px; top: 420px" aria-label="A: pat your pet">A</button>
+        <button class="abtn" id="syncBtn" style="left: 186px; top: 436px" aria-label="B: sync tasks">B</button>
+        <button class="abtn" id="nameBtn" style="left: 257px; top: 420px" aria-label="C: rename your pet">C</button>
+        <div class="alabel" aria-hidden="true" style="left: 103px; top: 478px">PAT</div>
+        <div class="alabel" aria-hidden="true" style="left: 174px; top: 494px">SYNC</div>
+        <div class="alabel" aria-hidden="true" style="left: 245px; top: 478px">NAME</div>
+      </div>
+      <p id="bubble" class="msg" role="status">…</p>
+    </div>
+
+    <section class="card" id="secVitals" aria-labelledby="hVitals">
+      <h2 class="card-h px" id="hVitals" style="background: #8fd3c1">VITALS</h2>
+      <div class="card-b">
+        <div class="namerow">
+          <button id="petName" class="name" title="Rename your pet">Archie</button>
+          <span id="stageName" class="stage px">EGG</span>
+        </div>
+        <div class="stat"><span>Fullness</span><div class="hearts" id="heartsFull" role="img"></div><span class="num" id="numFull"></span></div>
+        <div class="stat"><span>Happiness</span><div class="hearts" id="heartsHappy" role="img"></div><span class="num" id="numHappy"></span></div>
+        <div class="stat"><span>Health</span><div class="hearts" id="heartsHealth" role="img"></div><span class="num" id="numHealth"></span></div>
+        <div class="meta">
+          <span class="chip" id="streakChip"></span>
+          <span class="chip" id="bestChip"></span>
+          <span class="chip" id="doneChip"></span>
+        </div>
+        <div class="next" id="nextEvo"></div>
+      </div>
+    </section>
+  </div>
+
+  <div class="stack" id="rightStack">
+    <div class="wbar" id="wbar">
+      <button class="btn" id="fullBtn">Full view</button>
+      <button class="btn" id="closeBtn" aria-label="Close panel">×</button>
+    </div>
+    <section class="card" id="secTasks" aria-labelledby="hTasks">
+      <h2 class="card-h px" id="hTasks" style="background: #f6c945">TASKS</h2>
+      <div class="card-b">
+        <label class="row"><span class="subtle">List</span><select id="listSel" class="field" aria-label="Task list"></select></label>
+        <form id="addForm" class="row">
+          <input id="newTitle" class="field grow" type="text" placeholder="Add a task…" aria-label="New task title" required>
+          <input id="newDue" class="field" type="date" aria-label="Due date (optional)">
+          <button class="btn primary" id="addBtn">Add</button>
+        </form>
+        <ul id="tasks" class="tasks"></ul>
+      </div>
+    </section>
+
+    <section class="card" id="secRecurring" aria-labelledby="hRecurring">
+      <h2 class="card-h px" id="hRecurring" style="background: #f28c78">RECURRING</h2>
+      <div class="card-b">
+        <p id="ordersIntro" class="subtle" style="margin: 0">Tap the loop icon next to a task to make it recurring. Each recurring task must be finished on its due date, or that day breaks your streak. Repeating tasks stay recurring.</p>
+        <ul id="orders" class="orders"></ul>
+        <p id="ordersSummary" class="orders-sum" hidden></p>
+      </div>
+    </section>
+
+    <section class="card" id="secLog" aria-labelledby="hLog">
+      <h2 class="card-h px" id="hLog" style="background: #9cc9f0">LOG</h2>
+      <div class="card-b">
+        <ul id="log" class="log"></ul>
+        <button class="link" id="resetBtn">Reset pet</button>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script>
+/* ============ CONFIG — paste your OAuth client ID here (see README) ============ */
+const CONFIG = {
+  CLIENT_ID: '436606628233-gnceurbguuaq4t5tg5n2nd9o4ea99urh.apps.googleusercontent.com',
+  POLL_MINUTES: 2,          // how often to check Google for tasks completed elsewhere
+};
+
+/* ============ Tuning knobs ============ */
+const RATES = {             // per hour
+  fullnessDecay: 4, happinessDecay: 3,
+  overdueHappiness: 1.5, overdueHealth: 2,   // per overdue task
+  starvingHealth: 3, regenHealth: 1.5,
+};
+const FEED = { fullness: 15, happiness: 10, overdueBonus: 8, health: 4, revive: 25 };
+const STAGES = [
+  { name: 'Egg',        min: 0 },
+  { name: 'Hatchling',  min: 1 },
+  { name: 'Inkling',    min: 3 },
+  { name: 'Tidecaller', min: 7 },
+  { name: 'Deepwarden', min: 14 },
+  { name: 'Kraken',     min: 30 },
+];
+
+/* ============ Helpers ============ */
+const $ = s => document.querySelector(s);
+const clamp = (v, lo = 0, hi = 100) => Math.max(lo, Math.min(hi, v));
+const pad = n => String(n).padStart(2, '0');
+const dayKey = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const todayKey = () => dayKey(new Date());
+const shiftDay = n => { const d = new Date(); d.setDate(d.getDate() + n); return dayKey(d); };
+const uid = () => Math.random().toString(36).slice(2, 10);
+const diffDays = (a, b) => {
+  const [y1, m1, d1] = a.split('-').map(Number), [y2, m2, d2] = b.split('-').map(Number);
+  return Math.round((Date.UTC(y2, m2 - 1, d2) - Date.UTC(y1, m1 - 1, d1)) / 864e5);
+};
+class AuthError extends Error { constructor() { super('Your Google session expired.'); this.name = 'AuthError'; } }
+
+/* ============ Saved state ============ */
+// Storage names keep the app's original name (Taskling) so existing pets and Drive saves still load after the rename to Archie.
+const STORE = 'taskling.v1';
+const defaults = () => ({
+  name: 'Archie', stats: { fullness: 70, happiness: 70, health: 100 }, lastTick: Date.now(),
+  seen: [], days: [], bestStreak: 0, mode: 'demo', listId: null, initLists: {}, log: [], lastPet: 0, savedAt: 0,
+  streakTasks: [], missed: {}, dutiesDoneOn: null,
+});
+function load() {
+  try { const raw = localStorage.getItem(STORE); if (raw) return Object.assign(defaults(), JSON.parse(raw)); } catch (e) {}
+  return defaults();
+}
+function saveLocal() { try { localStorage.setItem(STORE, JSON.stringify(S)); } catch (e) {} }
+// save(true) marks a meaningful change (feeding, petting, renaming…) and queues a cloud save.
+// Plain save() only refreshes the local copy; hunger decay is recomputed from timestamps anyway.
+function save(meaningful = false) {
+  if (meaningful) S.savedAt = Date.now();
+  saveLocal();
+  if (meaningful && typeof Cloud !== 'undefined') Cloud.schedule();
+}
+let S = load();
+let TASKS = [];
+let OVERDUE = 0;
+
+/* ============ Demo backend (works offline, no Google needed) ============ */
+const Demo = {
+  key: 'taskling.demo',
+  data() {
+    try { const d = JSON.parse(localStorage.getItem(this.key)); if (d) return d; } catch (e) {}
+    const d = { lists: [{ id: 'demo', title: 'Demo tasks' }], tasks: [
+      { id: uid(), title: 'Reply to that email you keep putting off', status: 'needsAction', due: shiftDay(-1) },
+      { id: uid(), title: 'Water the plants', status: 'needsAction', due: todayKey() },
+      { id: uid(), title: 'Take a 15-minute walk', status: 'needsAction', due: null },
+      { id: uid(), title: 'Plan the weekend', status: 'needsAction', due: shiftDay(2) },
+    ] };
+    this.put(d); return d;
+  },
+  put(d) { try { localStorage.setItem(this.key, JSON.stringify(d)); } catch (e) {} },
+  async listLists() { return this.data().lists; },
+  async listTasks() { return this.data().tasks.slice(); },
+  async addTask(listId, title, due) { const d = this.data(); d.tasks.push({ id: uid(), title, status: 'needsAction', due: due || null }); this.put(d); },
+  async completeTask(listId, id) {
+    const d = this.data(); const t = d.tasks.find(x => x.id === id);
+    if (t) { t.status = 'completed'; t.completed = new Date().toISOString(); }
+    this.put(d);
+  },
+};
+
+/* ============ Google Tasks backend ============ */
+const API = 'https://tasks.googleapis.com/tasks/v1/';
+const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.appdata';
+const G = {
+  token: null, exp: 0, client: null, pending: null,
+  ensureClient() {
+    if (this.client) return;
+    this.client = google.accounts.oauth2.initTokenClient({
+      client_id: CONFIG.CLIENT_ID,
+      scope: 'https://www.googleapis.com/auth/tasks ' + DRIVE_SCOPE,
+      callback: r => {
+        const p = this.pending; this.pending = null; if (!p) return;
+        if (r.error) return p.reject(new Error(r.error_description || r.error));
+        this.token = r.access_token;
+        this.exp = Date.now() + (Number(r.expires_in) || 3600) * 1000;
+        this.lastResponse = r;
+        p.resolve(r);
+      },
+      error_callback: e => {
+        const p = this.pending; this.pending = null;
+        if (p) p.reject(new Error(e.type === 'popup_closed' ? 'Sign-in window was closed.' : (e.message || 'Sign-in failed.')));
+      },
+    });
+  },
+  signIn(interactive = true) {
+    if (NATIVE) return nativeToken(interactive).then(r => {
+      this.token = r.access_token;
+      this.exp = Date.now() + (Number(r.expires_in) || 3600) * 1000;
+      this.lastResponse = r;
+      // The app can renew the token quietly, so keep it fresh instead of asking you to reconnect every hour.
+      clearTimeout(refreshTimer);
+      refreshTimer = setTimeout(() => this.signIn(false).then(() => render()).catch(() => {}), Math.max(60, (Number(r.expires_in) || 3600) - 300) * 1000);
+      return r;
+    });
+    this.ensureClient();
+    return new Promise((resolve, reject) => { this.pending = { resolve, reject }; this.client.requestAccessToken({ prompt: '' }); });
+  },
+  valid() { return !!this.token && Date.now() < this.exp - 30000; },
+  async fetchJSON(url, opts = {}) {
+    if (!this.valid()) throw new AuthError();
+    const headers = { Authorization: 'Bearer ' + this.token };
+    if (opts.body) headers['Content-Type'] = opts.type || 'application/json';
+    const r = await fetch(url, { method: opts.method || 'GET', headers, body: opts.body, keepalive: !!opts.keepalive });
+    if (r.status === 401) { this.token = null; throw new AuthError(); }
+    if (!r.ok) {
+      let msg = 'HTTP ' + r.status;
+      try { const j = await r.json(); msg = (j.error && j.error.message) || msg; } catch (e) {}
+      const err = new Error(msg); err.status = r.status; throw err;
+    }
+    return r.status === 204 ? null : r.json();
+  },
+  async api(path, opts = {}) {
+    try { return await this.fetchJSON(API + path, { ...opts, body: opts.body ? JSON.stringify(opts.body) : undefined }); }
+    catch (e) { if (!(e instanceof AuthError)) e.message = 'Google Tasks: ' + e.message; throw e; }
+  },
+  async listLists() {
+    const j = await this.api('users/@me/lists?maxResults=100');
+    return (j.items || []).map(l => ({ id: l.id, title: l.title }));
+  },
+  async listTasks(listId) {
+    const out = []; let pageToken;
+    for (let i = 0; i < 10; i++) {
+      const q = new URLSearchParams({ showCompleted: 'true', showHidden: 'true', maxResults: '100' });
+      if (pageToken) q.set('pageToken', pageToken);
+      const j = await this.api(`lists/${encodeURIComponent(listId)}/tasks?${q}`);
+      for (const t of j.items || []) {
+        if (t.deleted || !(t.title || '').trim()) continue;
+        // Google stores due dates as midnight UTC, so the first 10 chars are the calendar date.
+        out.push({ id: t.id, title: t.title, status: t.status, due: t.due ? t.due.slice(0, 10) : null, completed: t.completed || null });
+      }
+      pageToken = j.nextPageToken; if (!pageToken) break;
+    }
+    return out;
+  },
+  addTask(listId, title, due) {
+    const body = { title };
+    if (due) body.due = due + 'T00:00:00.000Z';
+    return this.api(`lists/${encodeURIComponent(listId)}/tasks`, { method: 'POST', body });
+  },
+  completeTask(listId, id) {
+    return this.api(`lists/${encodeURIComponent(listId)}/tasks/${encodeURIComponent(id)}`, { method: 'PATCH', body: { status: 'completed' } });
+  },
+};
+
+let backend = S.mode === 'google' ? G : Demo;
+
+/* ============ Mac app bridge ============ */
+// Inside the Archie Mac app, window.ArchieNative exists. Google sign-in then happens in Apple's secure
+// sign-in sheet (Google blocks it inside embedded pages) and the app hands the page an access token.
+const NATIVE = typeof window.ArchieNative === 'object' && window.ArchieNative !== null;
+/** @type {Array<{resolve: (r: {access_token: string, expires_in: number, scope: string}) => void, reject: (e: Error) => void}>} */
+const nativeAuthWaiters = [];
+/** Ask the Mac app for a Google access token.
+ * @param {boolean} interactive false = only reuse a saved sign-in, never show the sign-in sheet
+ * @returns {Promise<{access_token: string, expires_in: number, scope: string}>} */
+function nativeToken(interactive) {
+  return new Promise((resolve, reject) => {
+    nativeAuthWaiters.push({ resolve, reject });
+    window.ArchieNative.post({ type: 'signIn', interactive });
+  });
+}
+/** @param {{scope?: string}} r @returns {boolean} whether the Drive app-folder permission was granted */
+const hasDriveScope = r => NATIVE ? String(r.scope || '').split(' ').includes(DRIVE_SCOPE) : google.accounts.oauth2.hasGrantedAllScopes(r, DRIVE_SCOPE);
+let refreshTimer = null;
+
+/* ============ Pet logic ============ */
+/* ---- Recurring tasks: tasks that must be done on their due date for that day to count toward the streak ---- */
+let DUTY = { due: 0, pending: 0 };
+const dutyKey = title => (title || '').trim().toLowerCase().replace(/\s+/g, ' ');
+const isDuty = t => S.streakTasks.some(d => d.key === dutyKey(t.title));
+const doneOnTime = t => t.status === 'completed' && t.completed && dayKey(new Date(t.completed)) <= t.due;
+// Record any past due date where a recurring task wasn't finished in time. Returns the new misses.
+function checkDuties(tasks) {
+  const today = todayKey(), fresh = [];
+  for (const d of S.streakTasks) for (const t of tasks) {
+    if (dutyKey(t.title) !== d.key || !t.due || t.due < d.since || t.due >= today || doneOnTime(t)) continue;
+    const arr = S.missed[t.due] || (S.missed[t.due] = []);
+    if (!arr.includes(d.key)) { arr.push(d.key); fresh.push({ day: t.due, title: d.title }); }
+  }
+  const cutoff = shiftDay(-400);
+  for (const k of Object.keys(S.missed)) if (k < cutoff || !S.missed[k].length) delete S.missed[k];
+  return fresh;
+}
+function computeDuty() {
+  const today = todayKey();
+  const dueToday = TASKS.filter(t => t.due === today && isDuty(t));
+  DUTY = { due: dueToday.length, pending: dueToday.filter(t => !doneOnTime(t)).length };
+}
+// A day counts if any task was finished, no recurring task was missed, and (for today) none are still waiting.
+function qualifyingDays() {
+  const today = todayKey();
+  return new Set(S.days.filter(k => !(S.missed[k] && S.missed[k].length) && !(k === today && DUTY.pending > 0)));
+}
+function streaks() {
+  const set = qualifyingDays();
+  let best = 0, run = 0, prev = null;
+  for (const k of [...set].sort()) { run = prev && diffDays(prev, k) === 1 ? run + 1 : 1; best = Math.max(best, run); prev = k; }
+  let cur = 0; const d = new Date();
+  if (!set.has(dayKey(d))) d.setDate(d.getDate() - 1); // today not done yet: streak still alive from yesterday
+  while (set.has(dayKey(d))) { cur++; d.setDate(d.getDate() - 1); }
+  return { best, cur };
+}
+function stageIndex() {
+  if (!S.days.length) return 0;
+  let i = 1;
+  for (let k = 1; k < STAGES.length; k++) if (S.bestStreak >= STAGES[k].min) i = k;
+  return i;
+}
+function tick() {
+  const now = Date.now();
+  const hrs = Math.min((now - S.lastTick) / 3.6e6, 72); // cap long absences at 3 days
+  S.lastTick = now;
+  if (hrs <= 0 || stageIndex() === 0) return; // eggs don't get hungry
+  const s = S.stats;
+  s.fullness = clamp(s.fullness - RATES.fullnessDecay * hrs);
+  s.happiness = clamp(s.happiness - (RATES.happinessDecay + RATES.overdueHappiness * OVERDUE) * hrs);
+  let dh = -RATES.overdueHealth * OVERDUE * hrs;
+  if (s.fullness <= 0) dh -= RATES.starvingHealth * hrs;
+  if (OVERDUE === 0 && s.fullness > 30) dh += RATES.regenHealth * hrs;
+  s.health = clamp(s.health + dh);
+}
+function getMood() {
+  const s = S.stats;
+  if (stageIndex() === 0) return 'egg';
+  if (s.health <= 0) return 'fainted';
+  if (s.health < 30) return 'sick';
+  if (s.fullness < 25) return 'hungry';
+  if (OVERDUE > 0) return 'worried';
+  if (s.happiness < 35) return 'sad';
+  if (s.happiness >= 75 && s.fullness >= 50) return 'happy';
+  return 'content';
+}
+const MOOD_TEXT = {
+  egg: () => 'Something stirs within. Complete a task to hatch it!',
+  fainted: () => '…sunk to the seafloor. Finish a task to revive me!',
+  sick: () => 'Feeling seasick. Can we clear the overdue stuff?',
+  hungry: () => 'My belly rumbles like a storm! Got a task to finish?',
+  worried: () => `${OVERDUE} overdue task${OVERDUE > 1 ? 's lurk' : ' lurks'} on the horizon.`,
+  sad: () => 'The tide feels lonely. Pat me or finish something?',
+  happy: () => stageIndex() === 5 ? 'The seas bow before us!' : 'Smooth sailing!',
+  content: () => stageIndex() === 5 ? 'I guard these waters. What task shall we conquer?' : "Calm waters. What's next?",
+};
+function feed(t) {
+  const s = S.stats;
+  const late = t.due && t.completed && t.due < dayKey(new Date(t.completed));
+  if (s.health <= 0) s.health = FEED.revive;
+  s.fullness = clamp(s.fullness + FEED.fullness);
+  s.happiness = clamp(s.happiness + FEED.happiness + (late ? FEED.overdueBonus : 0));
+  s.health = clamp(s.health + FEED.health);
+  addLog(`Gobbled “${t.title}”${late ? ' — an overdue one, a great relief!' : ''}`);
+}
+function addLog(text) { S.log.unshift({ t: Date.now(), text }); S.log = S.log.slice(0, 12); }
+
+/* ============ Cloud save: one JSON file in your Google Drive's hidden app folder ============ */
+const DRIVE = 'https://www.googleapis.com/drive/v3/files';
+const DRIVE_UP = 'https://www.googleapis.com/upload/drive/v3/files';
+const SAVE_NAME = 'taskling-save.json';
+const SYNC_KEYS = ['name', 'stats', 'lastTick', 'seen', 'days', 'bestStreak', 'listId', 'initLists', 'log', 'lastPet', 'savedAt', 'streakTasks', 'missed', 'dutiesDoneOn'];
+const Cloud = {
+  enabled: false, fileId: null, lastRemote: 0, timer: null, status: 'off',
+  setStatus(st) { this.status = st; renderCloud(); },
+  // Called right after sign-in: load the cloud save (or create it from this browser's pet).
+  async init(tokenResponse) {
+    this.enabled = !!(tokenResponse && hasDriveScope(tokenResponse));
+    if (!this.enabled) {
+      this.setStatus('off');
+      showBanner("Archie wasn't given permission to save to Google Drive, so your pet is only saved in this browser. Reconnect and allow the Drive option to turn on cloud saves.", 'Reconnect', connectGoogle);
+      return false;
+    }
+    try {
+      const f = await this.find();
+      let adopted = false;
+      // The first time this browser links to Drive, an existing cloud pet always wins over the local one.
+      if (f) adopted = await this.pull(f, !S.cloudLinked);
+      S.cloudLinked = true; saveLocal();
+      if (!f || !adopted) { if (!S.savedAt) S.savedAt = Date.now(); await this.push(); }
+      this.setStatus('saved');
+      return adopted;
+    } catch (e) { this.fail(e); return false; }
+  },
+  async find() {
+    const q = encodeURIComponent(`name='${SAVE_NAME}'`);
+    const j = await G.fetchJSON(`${DRIVE}?spaces=appDataFolder&q=${q}&fields=files(id,modifiedTime)&pageSize=1`);
+    const f = (j.files || [])[0] || null;
+    if (f) this.fileId = f.id;
+    return f;
+  },
+  // Fetch the cloud save if it changed since we last saw it. Returns true if it replaced the local pet.
+  async pull(f, force = false) {
+    f = f || await this.find();
+    if (!f) return false;
+    const mt = Date.parse(f.modifiedTime) || 0;
+    if (!force && mt && mt <= this.lastRemote) return false;
+    const remote = await G.fetchJSON(`${DRIVE}/${f.id}?alt=media`);
+    this.lastRemote = mt;
+    return mergeRemote(remote, force);
+  },
+  async push(opts = {}) {
+    const body = JSON.stringify(cloudSnapshot());
+    let r;
+    try {
+      if (this.fileId) {
+        r = await G.fetchJSON(`${DRIVE_UP}/${this.fileId}?uploadType=media&fields=id,modifiedTime`, { method: 'PATCH', body, type: 'application/json', keepalive: opts.keepalive });
+      } else {
+        const b = 'taskling' + uid();
+        const meta = JSON.stringify({ name: SAVE_NAME, parents: ['appDataFolder'], mimeType: 'application/json' });
+        const multi = `--${b}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${meta}\r\n--${b}\r\nContent-Type: application/json\r\n\r\n${body}\r\n--${b}--`;
+        r = await G.fetchJSON(`${DRIVE_UP}?uploadType=multipart&fields=id,modifiedTime`, { method: 'POST', body: multi, type: `multipart/related; boundary=${b}` });
+        this.fileId = r.id;
+      }
+    } catch (e) {
+      if (e.status === 404 && this.fileId) { this.fileId = null; return this.push(opts); } // save file was deleted; recreate it
+      throw e;
+    }
+    this.lastRemote = Date.parse(r.modifiedTime) || Date.now(); // so we don't re-download our own save
+  },
+  schedule() {
+    if (!this.enabled || S.mode !== 'google' || !G.valid()) return;
+    clearTimeout(this.timer);
+    this.setStatus('pending');
+    this.timer = setTimeout(() => this.flush(), 1500);
+  },
+  async flush(opts = {}) {
+    clearTimeout(this.timer); this.timer = null;
+    if (!this.enabled || !G.valid()) return;
+    this.setStatus('saving');
+    try { await this.push(opts); this.setStatus('saved'); } catch (e) { this.fail(e); }
+  },
+  fail(e) {
+    console.error(e);
+    this.setStatus('error');
+    if (e instanceof AuthError) return; // the Tasks side shows the reconnect banner
+    if (e.status === 403 && /drive api|has not been used|disabled/i.test(e.message)) {
+      showBanner('Cloud saves need the Google Drive API turned on in your Google Cloud project (README step 2). Your pet is still saved in this browser.');
+    }
+  },
+};
+function mergeMissed(a, b) {
+  const out = {};
+  for (const src of [a || {}, b || {}]) for (const [day, keys] of Object.entries(src)) out[day] = [...new Set([...(out[day] || []), ...keys])];
+  return out;
+}
+function cloudSnapshot() { const o = { v: 1 }; for (const k of SYNC_KEYS) o[k] = S[k]; return o; }
+function mergeRemote(r, force = false) {
+  if (!r || typeof r !== 'object' || !r.stats) return false;
+  const days = new Set([...(S.days || []), ...(r.days || [])]);
+  const seen = new Set([...(S.seen || []), ...(r.seen || [])]);
+  const initLists = Object.assign({}, r.initLists || {}, S.initLists || {});
+  const remoteNewer = force || (r.savedAt || 0) > (S.savedAt || 0);
+  if (remoteNewer) for (const k of SYNC_KEYS) if (k in r) S[k] = r[k];
+  // Completion history is merged both ways so no device's streak days or eaten tasks are lost.
+  S.days = [...days].sort().slice(-400);
+  S.seen = [...seen].slice(-3000);
+  S.initLists = initLists;
+  S.bestStreak = Math.max(S.bestStreak || 0, r.bestStreak || 0);
+  S.missed = mergeMissed(S.missed, r.missed);
+  saveLocal();
+  return remoteNewer;
+}
+function renderCloud() {
+  const c = $('#cloudChip'); if (!c) return;
+  const show = S.mode === 'google' && Cloud.status !== 'off';
+  c.hidden = !show;
+  if (!show) return;
+  const txt = { pending: '☁ Saving soon…', saving: '☁ Saving…', saved: '☁ Saved to Drive', error: '☁ Saved in this browser only' };
+  c.textContent = txt[Cloud.status] || '';
+  c.className = 'chip' + (Cloud.status === 'saved' ? ' live' : '');
+  c.title = Cloud.status === 'error' ? "Couldn't reach Google Drive. Changes are kept here and will upload on the next save." : 'Your pet is saved in your Google Drive (hidden app folder).';
+}
+
+/* ============ Sync ============ */
+let syncing = false;
+async function sync() {
+  if (syncing || !S.listId) return;
+  syncing = true; $('#syncBtn').disabled = true;
+  try {
+    if (S.mode === 'google' && Cloud.enabled) {
+      try { if (await Cloud.pull()) { render(); } } catch (e) { Cloud.fail(e); }
+    }
+    const tasks = await backend.listTasks(S.listId);
+    tick();
+    const key = S.mode + ':' + S.listId;
+    const firstTime = !S.initLists[key];
+    const seen = new Set(S.seen), days = new Set(S.days);
+    const stageBefore = stageIndex();
+    let fed = 0;
+    for (const t of tasks) {
+      if (t.status !== 'completed' || !t.completed) continue;
+      days.add(dayKey(new Date(t.completed)));
+      if (!seen.has(t.id)) { seen.add(t.id); if (!firstTime) { feed(t); fed++; } }
+    }
+    S.initLists[key] = true;
+    S.seen = [...seen].slice(-3000);
+    S.days = [...days].sort().slice(-400);
+    TASKS = tasks;
+    const misses = checkDuties(tasks);
+    computeDuty();
+    S.bestStreak = Math.max(S.bestStreak, streaks().best);
+    const today = todayKey();
+    for (const m of misses) addLog(`Missed the recurring task “${m.title}” on ${fmtDay(m.day)}. The streak was broken.`);
+    const dutiesDone = DUTY.due > 0 && DUTY.pending === 0 && S.dutiesDoneOn !== today;
+    if (dutiesDone) { S.dutiesDoneOn = today; addLog('All recurring tasks for today are done. Streak secured!'); }
+    OVERDUE = tasks.filter(t => t.status !== 'completed' && t.due && t.due < today).length;
+    const stageAfter = stageIndex();
+    if (firstTime && days.size) addLog(`Synced “${listTitle()}” — ${days.size} active day${days.size === 1 ? '' : 's'} found in your history.`);
+    if (stageAfter > stageBefore) {
+      addLog(stageBefore === 0 ? 'The egg hatched into a Hatchling!' : `Grew into a ${STAGES[stageAfter].name}!`);
+      say(stageBefore === 0 ? 'Ahoy, world!' : stageAfter === 5 ? 'I have become the KRAKEN. The seas tremble.' : `I've grown into a ${STAGES[stageAfter].name}!`, 'evolve');
+    } else if (dutiesDone) {
+      say('Recurring tasks done! The streak holds fast.', 'jump');
+    } else if (fed) {
+      say(fed > 1 ? `Chomp chomp chomp! (${fed} tasks)` : 'Chomp! Delicious.', 'jump');
+    } else if (misses.length) {
+      say('We missed a recurring task… the streak sank.', null);
+    }
+    save(fed > 0 || firstTime || stageAfter > stageBefore || misses.length > 0 || dutiesDone); render(); renderTasks();
+  } catch (e) { handleErr(e); }
+  finally { syncing = false; $('#syncBtn').disabled = false; }
+}
+
+/* ============ Pixel sprites (16×16 monochrome; '#' is a lit LCD pixel) ============ */
+
+/** Turn a sprite grid into one box-shadow list: each lit cell becomes a p×p square.
+ * @param {string[]} rows @param {number} p cell size in px @param {string} color @returns {string} */
+function tlShadow(rows, p, color) {
+  var out = [];
+  for (var y = 0; y < rows.length; y++) {
+    for (var x = 0; x < rows[y].length; x++) {
+      if (rows[y][x] === '#') out.push(((x + 1) * p) + 'px ' + ((y + 1) * p) + 'px 0 0 ' + color);
+    }
+  }
+  return out.length ? out.join(',') : 'none';
+}
+/** @param {string[]} rows @returns {string[]} the egg rocked one pixel to the side */
+function tlTilt(rows) { return rows.map(function (r, i) { return i < 8 ? '.' + r.slice(0, -1) : r; }); }
+
+var TL_EGG = [
+  '................','......####......','....##....##....','...#........#...',
+  '..#...##.....#..','..#..####....#..','.#....##......#.','.#............#.',
+  '.##.##.##.##.##.','.#.#..#..#..#.#.','.#............#.','..#.....##...#..',
+  '..#....####..#..','...#....##..#...','....##....##....','......####......'
+];
+var TL_SPRITES = {
+  Egg: { a: TL_EGG, b: tlTilt(TL_EGG) },
+  Hatchling: {
+    a: ['................','................','................','................','................','................',
+        '......####......','.....#....#.....','....#......#....','....#.#..#.#....','....#......#....',
+        '....#..##..#....','....#......#....','....##.##.##....','................','................'],
+    b: ['................','................','................','................','................','................','................',
+        '......####......','.....#....#.....','....#......#....','....#.#..#.#....','....#..##..#....',
+        '....#......#....','...#.#.##.#.#...','................','................'],
+    // facing left (mirrored for right) and facing away, two frames each like the front view
+    l: ['................','................','................','................','................','................',
+        '......####......','.....#....#.....','....#......#....','....#.#....#....','....#......#....',
+        '....##.....#....','....#......#....','.....##.##.##...','................','................'],
+    k: ['................','................','................','................','................','................',
+        '......####......','.....#....#.....','....#......#....','....#......#....','....#......#....',
+        '....#......#....','....#......#....','....##.##.##....','................','................'],
+    l2: ['................','................','................','................','................','................','................',
+        '......####......','.....#....#.....','....#......#....','....#.#....#....','....##.....#....',
+        '....#......#....','....#.#.##.#.#..','................','................'],
+    k2: ['................','................','................','................','................','................','................',
+        '......####......','.....#....#.....','....#......#....','....#......#....','....#......#....',
+        '....#......#....','...#.#.##.#.#...','................','................']
+  },
+  Inkling: {
+    // juvenile: big round head, short free-flowing arms that never touch; eyes lift a row on frame B while the mouth stays put
+    a: ['................','.......##.......','......#..#......','....##....##....','...#........#...','..#..........#..',
+        '..#..##..##..#..','..#..##..##..#..','..#..........#..','..#....##....#..','...#........#...',
+        '...#.#....#.#...','..#..#....#..#..','..#...#..#...#..','...#..#..#..#...','.##..#....#..##.'],
+    b: ['................','.......##.......','......#..#......','....##....##....','...#........#...','..#..##..##..#..',
+        '..#..##..##..#..','..#..........#..','..#..........#..','..#....##....#..','...#........#...',
+        '...#.#....#.#...','...#..#..#..#...','..#...#..#...#..','..#..#....#..#..','...##.#..#.##...'],
+    // frame C: same face as A, tentacles in B's position
+    c: ['................','.......##.......','......#..#......','....##....##....','...#........#...','..#..........#..',
+        '..#..##..##..#..','..#..##..##..#..','..#..........#..','..#....##....#..','...#........#...',
+        '...#.#....#.#...','...#..#..#..#...','..#...#..#...#..','..#..#....#..#..','...##.#..#.##...'],
+    // facing left (mirrored for right) leans into the swim, eye lifts on frame B, arms stream behind; facing away shares the front arms
+    l: ['................','......##........','.....#..#.......','...##....##.....','..#........#....','..#..........#..',
+        '..#.##.......#..','..#.##.......#..','..#..........#..','..##.........#..','...#........#...',
+        '....#..#..#.....','.....#..#..#....','.....#...#..#...','....#....#...#..','....##..#.....##'],
+    l2: ['................','......##........','.....#..#.......','...##....##.....','..#........#....','..#.##.......#..',
+        '..#.##.......#..','..#..........#..','..#..........#..','..##.........#..','...#........#...',
+        '....#..#..#.....','....#...#..#....','.....#..#...#...','......#..#...#..','.....##...#...##'],
+    k: ['................','.......##.......','......#..#......','....##....##....','...#........#...','..#..........#..',
+        '..#..........#..','..#..........#..','..#..........#..','..#..........#..','...#........#...',
+        '...#.#....#.#...','..#..#....#..#..','..#...#..#...#..','...#..#..#..#...','.##..#....#..##.'],
+    k2: ['................','.......##.......','......#..#......','....##....##....','...#........#...','..#..........#..',
+        '..#..........#..','..#..........#..','..#..........#..','..#..........#..','...#........#...',
+        '...#.#....#.#...','...#..#..#..#...','..#...#..#...#..','..#..#....#..#..','...##.#..#.##...']
+  },
+  Tidecaller: {
+    // horn-shelled cephalopod: tall curved cone shell wider than the head, eyes under the rim, four flowing arms with curled tips
+    a: ['...........##...','..........#.#...','.........#..#...','........#..#.#..','.......#..#..#..','.....##..#..#.#.',
+        '....#...#..#..#.','..##..#..#..#.#.','.##############.','...#.##..##.#...','...#.##..##.#...',
+        '...#...##...#...','....#.#..#.#....','...#..#..#..#...','..#..#....#..#..','..##.#....#.##..'],
+    // frame B: eyelids lower with arms in their second position; frame C: frame A face with arms in their second position
+    b: ['...........##...','..........#.#...','.........#..#...','........#..#.#..','.......#..#..#..','.....##..#..#.#.',
+        '....#...#..#..#.','..##..#..#..#.#.','.##############.','...#.##..##.#...','...#........#...',
+        '...#...##...#...','....#.#..#.#....','...#.#....#.#...','...#..#..#..#...','.##...#..#...##.'],
+    c: ['...........##...','..........#.#...','.........#..#...','........#..#.#..','.......#..#..#..','.....##..#..#.#.',
+        '....#...#..#..#.','..##..#..#..#.#.','.##############.','...#.##..##.#...','...#.##..##.#...',
+        '...#...##...#...','....#.#..#.#....','...#.#....#.#...','...#..#..#..#...','.##...#..#...##.'],
+    // facing left (mirrored for right): smaller profile shell centered over the body with its tip leaning back, arms streaming behind
+    l: ['................','........##......','.......#.#......','......#..#......','.....#..#.#.....','....#..#..#.....',
+        '...#.#....#.....','..#...#...#.....','.##########.....','..#.##....#.....','..#.##....#.....',
+        '.##.......#.....','...#..#..#......','....#..#..#.....','.....#..#..#.##.','....#....#..#...'],
+    l2: ['................','........##......','.......#.#......','......#..#......','.....#..#.#.....','....#..#..#.....',
+        '...#.#....#.....','..#...#...#.....','.##########.....','..#.##....#.....','..#.......#.....',
+        '.##.......#.....','...#..#..#......','...#...#..#.....','....#...#..#....','.....##...#..##.'],
+    k: ['...........##...','..........#.#...','.........#..#...','........#..#.#..','.......#..#..#..','.....##..#..#.#.',
+        '....#...#..#..#.','..##..#..#..#.#.','.##############.','...#........#...','...#........#...',
+        '...#........#...','....#.#..#.#....','...#..#..#..#...','..#..#....#..#..','..##.#....#.##..'],
+    k2: ['...........##...','..........#.#...','.........#..#...','........#..#.#..','.......#..#..#..','.....##..#..#.#.',
+        '....#...#..#..#.','..##..#..#..#.#.','.##############.','...#........#...','...#........#...',
+        '...#........#...','....#.#..#.#....','...#.#....#.#...','...#..#..#..#...','.##...#..#...##.']
+  },
+  Deepwarden: {
+    // round antlered dome with an arc of glowing spots, heavy brow, four arms set clear of the mouth that flare outward
+    a: ['#.#..........#.#','.##...####...##.','..#.##....##.#..','...#..#..#..#...','..#..#....#..#..','.#.#........#.#.',
+        '.#............#.','.#..###..###..#.','.#..#.#..#.#..#.','.#.#........#.#.','.#....####....#.',
+        '..#..........#..','.##.#......#.##.','.#..#......#..#.','#...#......#...#','#..#........#..#'],
+    // frame B: eyes half-closed, arms in second position, a different set of spots dimmed; frame C: frame A face, arms in second position, spots twinkle
+    b: ['#.#..........#.#','.##...####...##.','..#.##....##.#..','...#.....#..#...','..#..#.......#..','.#..........#.#.',
+        '.#............#.','.#............#.','.#..###..###..#.','.#.#..........#.','.#....####....#.',
+        '..#..........#..','.##.#......#.##.','..#..#....#..#..','.#...#....#...#.','#...#......#...#'],
+    c: ['#.#..........#.#','.##...####...##.','..#.##....##.#..','...#..#.....#...','..#.......#..#..','.#.#..........#.',
+        '.#............#.','.#..###..###..#.','.#..#.#..#.#..#.','.#..........#.#.','.#....####....#.',
+        '..#..........#..','.##.#......#.##.','..#..#....#..#..','.#...#....#...#.','#...#......#...#'],
+    // facing left (mirrored for right): profile dome with both antlers, one eye, arms trailing; facing away: spots only, no face
+    l: ['.#.#.....#.#....','..##......##....','...#.####.#.....','...##....##.....','..#..#..#..#....','.#..#......#....',
+        '.#.#.......#....','.#.###.....#....','.#.#.#.....#....','.#....#....#....','.#..##.....#....',
+        '..#.......#.....','...#..#..#.##...','....#..#..#..#..','.....#..#..#..#.','....#....#...##.'],
+    l2: ['.#.#.....#.#....','..##......##....','...#.####.#.....','...##....##.....','..#..#.....#....','.#..#......#....',
+        '.#.#.......#....','.#.........#....','.#.###.....#....','.#.........#....','.#..##.....#....',
+        '..#.......#.....','...#..#..#.##...','...#...#..#..#..','....#...#..#...#','.....##...#..##.'],
+    k: ['#.#..........#.#','.##...####...##.','..#.##....##.#..','...#..#..#..#...','..#..#....#..#..','.#.#........#.#.',
+        '.#............#.','.#............#.','.#............#.','.#............#.','.#............#.',
+        '..#..........#..','.##.#......#.##.','.#..#......#..#.','#...#......#...#','#..#........#..#'],
+    k2: ['#.#..........#.#','.##...####...##.','..#.##....##.#..','...#..#.....#...','..#.......#..#..','.#.#..........#.',
+        '.#............#.','.#............#.','.#............#.','.#............#.','.#............#.',
+        '..#..........#..','.##.#......#.##.','..#..#....#..#..','.#...#....#...#.','#...#......#...#']
+  },
+  Kraken: {
+    // crowned and horned; six arms with gaps, the centre pair swaying together like kelp
+    a: ['#....#.##.#....#','#....######....#','.#..########..#.','..##........##..','..#....##....#..','.#.....##.....#.',
+        '.#.##......##.#.','.#.##......##.#.','.#............#.','.#..#.####.#..#.','.#...#.##.#...#.',
+        '#.#..........#.#','#..#..#..#..#..#','.#.#...#..#.#.#.','#.#....#..#..#.#','#.....#..#.....#'],
+    // frame B: eyes half-closed with arms swayed; frame C: frame A face with arms swayed
+    b: ['#....#.##.#....#','#....######....#','.#..########..#.','..##........##..','..#....##....#..','.#.....##.....#.',
+        '.#............#.','.#.##......##.#.','.#............#.','.#..#.####.#..#.','.#...#.##.#...#.',
+        '#.#..........#.#','#..#..#..#..#..#','.#.#.#..#...#.#.','#.#..#..#....#.#','#.....#..#.....#'],
+    c: ['#....#.##.#....#','#....######....#','.#..########..#.','..##........##..','..#....##....#..','.#.....##.....#.',
+        '.#.##......##.#.','.#.##......##.#.','.#............#.','.#..#.####.#..#.','.#...#.##.#...#.',
+        '#.#..........#.#','#..#..#..#..#..#','.#.#.#..#...#.#.','#.#..#..#....#.#','#.....#..#.....#'],
+    // facing left (mirrored for right): crown and horns in profile, one eye, fanged mouth at the front, arms trailing; facing away: no face or gem
+    l: ['#...#.##.#......','#...######......','.#.########.....','..##.......##...','..#...##....#...','.#....##.....#..',
+        '.#.##........#..','.#.##........#..','.#...........#..','.#.####......#..','.#..##......#...',
+        '#.#........#....','#..#..#..#..##..','.#..#..#..#...#.','#....#..#..#...#','#...#....#..##..'],
+    l2: ['#...#.##.#......','#...######......','.#.########.....','..##.......##...','..#...##....#...','.#....##.....#..',
+        '.#...........#..','.#.##........#..','.#...........#..','.#.####......#..','.#..##......#...',
+        '#.#........#....','#..#..#..#..##..','#...#..#..#...#.','.#...#..#..#...#','#.....#...#.##..'],
+    k: ['#....#.##.#....#','#....######....#','.#..########..#.','..##........##..','..#..........#..','.#............#.',
+        '.#............#.','.#............#.','.#............#.','.#............#.','.#............#.',
+        '#.#..........#.#','#..#..#..#..#..#','.#.#...#..#.#.#.','#.#....#..#..#.#','#.....#..#.....#'],
+    k2: ['#....#.##.#....#','#....######....#','.#..########..#.','..##........##..','..#..........#..','.#............#.',
+        '.#............#.','.#............#.','.#............#.','.#............#.','.#............#.',
+        '#.#..........#.#','#..#..#..#..#..#','.#.#.#..#...#.#.','#.#..#..#....#.#','#.....#..#.....#']
+  }
+};
+var TL_MOOD_ICONS = {
+  happy:   ['.##.##.','#######','#######','.#####.','..###..','...#...','.......'],
+  content: ['..#####','..#...#','..#...#','.##..##','###.###','.#...#.','.......'],
+  hungry:  ['.......','.###..#','#.####.','######.','.###..#','.......','.......'],
+  worried: ['...#...','..###..','.#####.','.#####.','..###..','.......','.......'],
+  sad:     ['..###..','.#####.','#######','.......','.#.#.#.','#.#.#..','.......'],
+  sick:    ['.#####.','#######','#..#..#','#######','.#####.','.#.#.#.','.......'],
+  fainted: ['####...','..#....','.#..###','####.#.','....###','.......','.......']
+};
+var TL_NAV = {
+  vitals:    ['.......','.....#.','...#.#.','...#.#.','.#.#.#.','.#.#.#.','#######'],
+  tasks:     ['#######','#.....#','#...#.#','##.#..#','#.#...#','#.....#','#######'],
+  recurring: ['.####.#','#....##','#...###','#......','#.....#','.#...#.','..###..'],
+  log:       ['#######','#.....#','#.###.#','#.....#','#.###.#','#.....#','#######'],
+  sync:      ['..#....','.######','..#....','.......','....#..','######.','....#..'],
+  pat:       ['...#...','..###..','#######','.#####.','..#.#..','.#...#.','.......'],
+  rename:    ['.....##','....#.#','...#.#.','..#.#..','.#.#...','#.#....','##.....'],
+  alert:     ['..###..','..###..','..###..','...#...','.......','..###..','..###..']
+};
+var TL_HEART_FULL = ['.##.##.','#######','#######','.#####.','..###..','...#...'];
+var TL_HEART_EMPTY = ['.##.##.','#..#..#','#.....#','.#...#.','..#.#..','...#...'];
+
+/* ============ Rendering ============ */
+const LCD_PX = 7;                 // one LCD pixel, in CSS px
+const LCD_INK = '#222a1e';
+/** @type {Array<[string, string]>} sprite layer class → frame key */
+const LAYERS = [['fa', 'a'], ['fb', 'b'], ['fc', 'c'], ['fl', 'l'], ['fl2', 'l2'], ['fr', 'r'], ['fr2', 'r2'], ['fk', 'k'], ['fk2', 'k2']];
+/** @param {string[]} rows @returns {string[]} the same sprite flipped left-to-right */
+const mirror = rows => rows.map(r => r.split('').reverse().join(''));
+const RECUR_ICON = tlShadow(TL_NAV.recurring, 2, 'currentColor');
+const HEART_FULL = tlShadow(TL_HEART_FULL, 3, 'currentColor');
+const HEART_EMPTY = tlShadow(TL_HEART_EMPTY, 3, 'currentColor');
+
+/** Where the pet rests before its motion loop starts (eggs and fainted pets sit on the seafloor).
+ * @param {string} mood @returns {[number, number]} */
+function restSpot(mood) {
+  if (mood === 'egg') return [56, 56];
+  if (mood === 'fainted') return [28, 56];
+  if (mood === 'hungry' || mood === 'sad' || mood === 'sick') return [0, 56];
+  return [7, 35];
+}
+
+let petStage = -1;
+/** Draw the pet on the LCD. Sprite layers are rebuilt only when the stage changes, so motion loops keep running smoothly between renders.
+ * @param {number} st stage index @param {string} mood @returns {void} */
+function renderPet(st, mood) {
+  const pet = $('#pet');
+  const spr = TL_SPRITES[STAGES[st].name];
+  if (st !== petStage) {
+    petStage = st;
+    /** @type {Record<string, string[]|undefined>} */
+    const frames = { a: spr.a, b: spr.b, c: spr.c, l: spr.l, l2: spr.l2, r: spr.l && mirror(spr.l), r2: spr.l2 && mirror(spr.l2), k: spr.k, k2: spr.k2 };
+    for (const [cls, key] of LAYERS) pet.querySelector(`.${cls} .pix`).style.boxShadow = frames[key] ? tlShadow(frames[key], LCD_PX, LCD_INK) : 'none';
+    $('#logoPix').style.boxShadow = tlShadow(spr.a, 3, 'currentColor');
+  }
+  const cls = ['matrix', st === 0 ? 'egg' : 'm-' + mood];
+  if (st > 0 && spr.l) cls.push('turns');
+  if (st > 0 && spr.c) cls.push('three');
+  for (const c of pet.classList) if (c === 'jump' || c === 'evolve' || c === 'showmood') cls.push(c);
+  const next = cls.join(' ');
+  if (pet.className !== next) pet.className = next;
+  const [x, y] = restSpot(mood);
+  const tf = `translate(${x}px, ${y}px)`;
+  const mover = $('#mover');
+  if (mover.style.transform !== tf) mover.style.transform = tf;
+  $('#moodPix').style.boxShadow = st === 0 ? 'none' : tlShadow(TL_MOOD_ICONS[mood], LCD_PX, LCD_INK);
+  pet.setAttribute('aria-label', st === 0 ? `Your egg. Press to give it a pat.` : `${S.name} the ${STAGES[st].name}, feeling ${mood}. Press to give it a pat.`);
+}
+
+/* ---- LCD icon rows: four jump to a section, three run an action, one lights up when something needs attention ---- */
+let navOn = 'vitals';
+const NAV_TOP = [['vitals', 'Vitals', '#secVitals'], ['tasks', 'Tasks', '#secTasks'], ['recurring', 'Recurring', '#secRecurring'], ['log', 'Log', '#secLog']];
+const NAV_BOTTOM = [['sync', 'Sync tasks'], ['pat', 'Pat your pet'], ['rename', 'Rename your pet']];
+/** @param {string} key @param {string} label @param {boolean} interactive @returns {HTMLElement} */
+function makeSeg(key, label, interactive) {
+  const el = document.createElement(interactive ? 'button' : 'span');
+  el.className = 'seg'; el.dataset.key = key;
+  if (interactive) el.setAttribute('aria-label', label); else el.setAttribute('aria-hidden', 'true');
+  const box = document.createElement('i'); const dot = document.createElement('span');
+  dot.className = 'ipix'; dot.style.boxShadow = tlShadow(TL_NAV[key], 3, LCD_INK);
+  box.append(dot); el.append(box);
+  return el;
+}
+/** @returns {void} */
+function buildIcons() {
+  const top = $('#iconsTop'), bottom = $('#iconsBottom');
+  for (const [key, label, target] of NAV_TOP) {
+    const b = makeSeg(key, label, true);
+    b.onclick = () => {
+      navOn = key; renderIcons();
+      const sec = $(target); sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      sec.classList.remove('flash'); void sec.offsetWidth; sec.classList.add('flash');
+    };
+    top.append(b);
+  }
+  for (const [key, label] of NAV_BOTTOM) {
+    const b = makeSeg(key, label, true);
+    b.onclick = () => (key === 'sync' ? $('#syncBtn').click() : key === 'pat' ? pat() : rename());
+    bottom.append(b);
+  }
+  bottom.append(makeSeg('alert', 'Needs attention', false));
+}
+/** @returns {void} */
+function renderIcons() {
+  const mood = getMood();
+  const alert = OVERDUE > 0 || DUTY.pending > 0 || mood === 'hungry' || mood === 'sick' || mood === 'fainted';
+  for (const el of document.querySelectorAll('#iconsTop .seg')) el.classList.toggle('on', el.dataset.key === navOn);
+  for (const el of document.querySelectorAll('#iconsBottom .seg')) {
+    const k = el.dataset.key;
+    el.classList.toggle('on', k === 'alert' ? alert : false);
+    if (k === 'alert') el.classList.toggle('blink', alert);
+  }
+}
+
+let sayTimer = null, reactTimer = null;
+function say(text, anim) {
+  $('#bubble').textContent = text;
+  const pet = $('#pet');
+  if (anim) {
+    pet.classList.remove('jump', 'evolve'); void pet.offsetWidth; pet.classList.add(anim);
+    clearTimeout(reactTimer);
+    reactTimer = setTimeout(() => pet.classList.remove('jump', 'evolve'), anim === 'evolve' ? 2600 : 1300);
+  }
+  clearTimeout(sayTimer);
+  sayTimer = setTimeout(() => { sayTimer = null; render(); }, 4500);
+}
+/** Show a stat as five pixel hearts plus its number.
+ * @param {string} id @param {string} numId @param {string} label @param {number} v 0–100 @returns {void} */
+function setHearts(id, numId, label, v) {
+  const el = $(id), filled = Math.round(v / 20);
+  if (el.dataset.n !== String(filled)) {
+    el.dataset.n = String(filled); el.innerHTML = '';
+    for (let i = 0; i < 5; i++) {
+      const box = document.createElement('i'), dot = document.createElement('span');
+      dot.className = 'hpix'; dot.style.boxShadow = i < filled ? HEART_FULL : HEART_EMPTY;
+      box.append(dot); el.append(box);
+    }
+  }
+  el.classList.toggle('low', v <= 30);
+  el.setAttribute('aria-label', `${label}: ${filled} of 5 hearts`);
+  $(numId).textContent = Math.round(v);
+}
+function render() {
+  const st = stageIndex(), mood = getMood();
+  renderPet(st, mood);
+  renderIcons();
+  $('#petName').textContent = S.name;
+  $('#stageName').textContent = STAGES[st].name.toUpperCase();
+  if (!sayTimer) $('#bubble').textContent = (DUTY.pending > 0 && (mood === 'content' || mood === 'happy'))
+    ? `${DUTY.pending} recurring task${DUTY.pending > 1 ? 's' : ''} due today. Let's keep the streak!` : MOOD_TEXT[mood]();
+  renderOrders();
+  setHearts('#heartsFull', '#numFull', 'Fullness', S.stats.fullness);
+  setHearts('#heartsHappy', '#numHappy', 'Happiness', S.stats.happiness);
+  setHearts('#heartsHealth', '#numHealth', 'Health', S.stats.health);
+  const { cur } = streaks();
+  $('#streakChip').textContent = `Streak: ${cur} day${cur === 1 ? '' : 's'}`;
+  $('#bestChip').textContent = `Best: ${S.bestStreak}`;
+  const today = todayKey();
+  const doneToday = TASKS.filter(t => t.status === 'completed' && t.completed && dayKey(new Date(t.completed)) === today).length;
+  $('#doneChip').textContent = `Done today: ${doneToday}`;
+  const next = STAGES[st + 1];
+  $('#nextEvo').textContent = st === 0 ? 'Finish any task to hatch the egg.'
+    : next ? `Evolves into a ${next.name} after a ${next.min}-day streak.` : 'Fully grown. Here be the Kraken.';
+  const log = $('#log'); log.innerHTML = '';
+  if (!S.log.length) log.innerHTML = '<li class="subtle">Nothing yet.</li>';
+  for (const e of S.log) {
+    const li = document.createElement('li');
+    const tm = document.createElement('time');
+    const d = new Date(e.t);
+    tm.textContent = d.toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+    li.append(tm, document.createTextNode(e.text));
+    log.append(li);
+  }
+  const chip = $('#modeChip');
+  if (S.mode === 'demo') { chip.textContent = 'Demo mode'; chip.className = 'chip'; }
+  else if (G.valid()) { chip.textContent = 'Google Tasks · live'; chip.className = 'chip live'; }
+  else { chip.textContent = 'Google Tasks · disconnected'; chip.className = 'chip'; }
+  $('#connectBtn').textContent = S.mode === 'google' && G.valid() ? 'Reconnect' : 'Connect Google Tasks';
+  $('#demoBtn').hidden = S.mode === 'demo';
+  renderCloud();
+}
+/** @returns {HTMLElement} the pixel loop icon used for recurring tasks */
+function recurIcon(cls) {
+  const box = document.createElement(cls === 'order-icon' ? 'span' : 'i');
+  if (cls) box.className = cls;
+  box.setAttribute('aria-hidden', 'true');
+  const dot = document.createElement('span'); dot.className = 'rpix'; dot.style.boxShadow = RECUR_ICON;
+  box.append(dot);
+  return box;
+}
+function renderTasks() {
+  const ul = $('#tasks'); ul.innerHTML = '';
+  const today = todayKey();
+  const open = TASKS.filter(t => t.status !== 'completed')
+    .sort((a, b) => (a.due || '9999').localeCompare(b.due || '9999'));
+  if (!open.length) { ul.innerHTML = '<li class="empty">Uncharted waters. Add a task to keep your pet fed.</li>'; return; }
+  for (const t of open) {
+    const li = document.createElement('li');
+    const late = t.due && t.due < today;
+    if (late) li.className = 'overdue';
+    const btn = document.createElement('button');
+    btn.className = 'check'; btn.title = 'Mark complete'; btn.setAttribute('aria-label', 'Complete ' + t.title);
+    btn.onclick = async () => {
+      btn.disabled = true;
+      try { await backend.completeTask(S.listId, t.id); await sync(); } catch (e) { btn.disabled = false; handleErr(e); }
+    };
+    const title = document.createElement('span'); title.className = 'ttitle'; title.textContent = t.title;
+    const duty = isDuty(t);
+    const rt = document.createElement('button');
+    rt.className = 'rt' + (duty ? ' on' : '');
+    rt.append(recurIcon(''));
+    rt.setAttribute('aria-pressed', duty);
+    rt.title = duty ? 'Recurring: required on its due date to keep your streak. Click to stop.' : 'Make this recurring (required on its due date to keep your streak)';
+    rt.setAttribute('aria-label', (duty ? 'Stop recurring: ' : 'Make recurring: ') + t.title);
+    rt.onclick = () => toggleDuty(t.title);
+    li.append(btn, title);
+    if (t.due) {
+      const due = document.createElement('span');
+      due.className = 'due' + (late ? ' late' : t.due === today ? ' today' : '');
+      const [y, m, d] = t.due.split('-').map(Number);
+      due.textContent = late ? 'Overdue · ' + new Date(y, m - 1, d).toLocaleDateString([], { month: 'short', day: 'numeric' })
+        : t.due === today ? 'Today' : new Date(y, m - 1, d).toLocaleDateString([], { month: 'short', day: 'numeric' });
+      li.append(due);
+    }
+    li.append(rt);
+    ul.append(li);
+  }
+}
+function fmtDay(k) { const [y, m, d] = k.split('-').map(Number); return new Date(y, m - 1, d).toLocaleDateString([], { month: 'short', day: 'numeric' }); }
+function toggleDuty(title) {
+  const key = dutyKey(title);
+  const i = S.streakTasks.findIndex(d => d.key === key);
+  if (i >= 0) {
+    S.streakTasks.splice(i, 1);
+    for (const k of Object.keys(S.missed)) { S.missed[k] = S.missed[k].filter(x => x !== key); if (!S.missed[k].length) delete S.missed[k]; }
+    addLog(`“${title}” is no longer recurring.`);
+  } else {
+    S.streakTasks.push({ key, title: title.trim(), since: todayKey() });
+    addLog(`“${title.trim()}” is now a recurring task.`);
+  }
+  computeDuty();
+  S.bestStreak = Math.max(S.bestStreak, streaks().best);
+  save(true); render(); renderTasks();
+}
+function orderStatus(d) {
+  const today = todayKey(), inst = TASKS.filter(t => dutyKey(t.title) === d.key);
+  const dueToday = inst.filter(t => t.due === today);
+  if (dueToday.length) return dueToday.every(doneOnTime) ? { cls: 'done', text: 'Done today' } : { cls: 'today', text: 'Due today' };
+  if (inst.some(t => t.status !== 'completed' && t.due && t.due < today)) return { cls: 'late', text: 'Overdue' };
+  const next = inst.filter(t => t.status !== 'completed' && t.due && t.due > today).map(t => t.due).sort()[0];
+  if (next) return { cls: '', text: 'Next: ' + fmtDay(next) };
+  if (inst.some(t => t.status !== 'completed' && !t.due)) return { cls: '', text: 'No due date', tip: 'Give this task a due date in Google Tasks; recurring tasks only count on their due dates.' };
+  return { cls: '', text: 'Not scheduled', tip: 'No upcoming copy of this task in the current list.' };
+}
+function renderOrders() {
+  const ul = $('#orders'); if (!ul) return;
+  ul.innerHTML = '';
+  $('#ordersIntro').hidden = S.streakTasks.length > 0;
+  for (const d of S.streakTasks) {
+    const st = orderStatus(d);
+    const li = document.createElement('li');
+    const ic = recurIcon('order-icon');
+    const name = document.createElement('span'); name.className = 'ttitle'; name.textContent = d.title;
+    const chip = document.createElement('span'); chip.className = 'due ' + st.cls; chip.textContent = st.text; if (st.tip) chip.title = st.tip;
+    const rm = document.createElement('button'); rm.className = 'x'; rm.textContent = '×';
+    rm.title = 'Stop recurring'; rm.setAttribute('aria-label', 'Stop recurring: ' + d.title);
+    rm.onclick = () => toggleDuty(d.title);
+    li.append(ic, name, chip, rm); ul.append(li);
+  }
+  const sum = $('#ordersSummary');
+  sum.hidden = !S.streakTasks.length;
+  sum.className = 'orders-sum' + (DUTY.due && !DUTY.pending ? ' ok' : DUTY.pending ? ' wait' : '');
+  sum.textContent = !DUTY.due ? 'None due today. Any finished task keeps the streak going.'
+    : DUTY.pending ? `Waiting on ${DUTY.pending} of ${DUTY.due} due today. Today won't count toward your streak until ${DUTY.pending > 1 ? 'they are' : 'it is'} done.`
+    : 'All recurring tasks done today. Streak secured!';
+}
+let LISTS = [];
+function listTitle() { return (LISTS.find(l => l.id === S.listId) || {}).title || 'tasks'; }
+function renderLists() {
+  const sel = $('#listSel'); sel.innerHTML = '';
+  for (const l of LISTS) { const o = document.createElement('option'); o.value = l.id; o.textContent = l.title; sel.append(o); }
+  if (S.listId) sel.value = S.listId;
+  sel.disabled = LISTS.length < 2;
+}
+
+/* ============ Banner + errors ============ */
+function showBanner(text, btnText, onBtn) {
+  $('#bannerText').textContent = text;
+  const b = $('#bannerBtn');
+  if (btnText) { b.hidden = false; b.textContent = btnText; b.onclick = () => { hideBanner(); onBtn(); }; } else b.hidden = true;
+  $('#banner').classList.add('show');
+}
+function hideBanner() { $('#banner').classList.remove('show'); }
+function handleErr(e) {
+  console.error(e);
+  if (e instanceof AuthError) { showBanner('Your Google session expired (they last about an hour).', 'Reconnect', connectGoogle); render(); }
+  else showBanner(e.message || String(e));
+}
+
+/* ============ Modes ============ */
+/** @param {{silent?: boolean}} [opts] silent: reconnect from a saved sign-in without showing anything */
+async function connectGoogle(opts = {}) {
+  const silent = !!(opts && opts.silent);
+  if (NATIVE) { /* the app handles sign-in itself */ }
+  else if (!CONFIG.CLIENT_ID || CONFIG.CLIENT_ID.startsWith('PASTE')) {
+    return showBanner('Add your Google OAuth client ID to the CONFIG section at the top of the script first — the README walks you through getting one.');
+  }
+  else if (location.protocol === 'file:') {
+    return showBanner('Google sign-in needs the page served from http://localhost:8000, not opened as a file. See README step 5.');
+  }
+  else if (!(window.google && google.accounts && google.accounts.oauth2)) {
+    return showBanner("Google's sign-in script hasn't loaded yet. Check your connection and try again.");
+  }
+  try {
+    const tokenResponse = await G.signIn(!silent);
+    hideBanner();
+    S.mode = 'google'; backend = G;
+    if (await Cloud.init(tokenResponse)) addLog('Loaded your pet from Google Drive.');
+    LISTS = await G.listLists();
+    if (!LISTS.length) throw new Error('No task lists found in your Google account.');
+    if (!LISTS.find(l => l.id === S.listId)) { S.listId = LISTS[0].id; save(true); } else save();
+    renderLists(); render();
+    await sync();
+  } catch (e) {
+    if (silent) { console.warn(e); showBanner('Welcome back! Reconnect to Google Tasks to sync your pet.', 'Reconnect', connectGoogle); }
+    else handleErr(e);
+  }
+}
+async function useDemo() {
+  S.mode = 'demo'; backend = Demo; LISTS = await Demo.listLists(); S.listId = 'demo';
+  save(); hideBanner(); renderLists(); render(); await sync();
+}
+
+/* ============ Events ============ */
+$('#connectBtn').onclick = connectGoogle;
+$('#demoBtn').onclick = useDemo;
+$('#bannerClose').onclick = hideBanner;
+$('#syncBtn').onclick = () => (S.mode === 'google' && !G.valid()) ? connectGoogle() : sync();
+const rename = () => { const n = prompt('Name your pet:', S.name); if (n && n.trim()) { S.name = n.trim().slice(0, 24); save(true); render(); } };
+$('#nameBtn').onclick = rename; $('#petName').onclick = rename;
+let moodTimer = null;
+/** Briefly show the pet's mood icon in the corner of the LCD, the way a pat reveals how it's feeling. @returns {void} */
+function showMood() {
+  const pet = $('#pet');
+  pet.classList.add('showmood');
+  clearTimeout(moodTimer);
+  moodTimer = setTimeout(() => pet.classList.remove('showmood'), 3000);
+}
+const pat = () => {
+  if (stageIndex() === 0) return say('*the egg sways in the current*', 'jump');
+  showMood();
+  if (S.stats.health <= 0) return say('…', null);
+  if (Date.now() - S.lastPet > 5 * 60000) { S.stats.happiness = clamp(S.stats.happiness + 5); S.lastPet = Date.now(); save(true); say('Glub glub! Thank you!', 'jump'); }
+  else say('That tickles my tentacles!', 'jump');
+  render();
+};
+$('#patBtn').onclick = pat; $('#pet').onclick = pat;
+$('#pet').onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pat(); } };
+$('#listSel').onchange = e => { S.listId = e.target.value; save(true); sync(); };
+$('#addForm').onsubmit = async e => {
+  e.preventDefault();
+  const title = $('#newTitle').value.trim(); if (!title) return;
+  $('#addBtn').disabled = true;
+  try { await backend.addTask(S.listId, title, $('#newDue').value || null); $('#newTitle').value = ''; $('#newDue').value = ''; await sync(); }
+  catch (err) { handleErr(err); }
+  finally { $('#addBtn').disabled = false; }
+};
+$('#resetBtn').onclick = () => {
+  if (!confirm('Start over with a new egg? Your tasks are not affected.')) return;
+  const keep = { mode: S.mode, listId: S.listId, cloudLinked: S.cloudLinked, streakTasks: S.streakTasks };
+  S = Object.assign(defaults(), keep); save(true); addLog('A new egg was laid.'); render(); sync();
+};
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') { if (Cloud.timer) Cloud.flush({ keepalive: true }); return; }
+  tick(); render();
+  if (S.mode === 'demo' || G.valid()) sync();
+});
+setInterval(() => { tick(); saveLocal(); render(); }, 30000);
+setInterval(() => { if (S.mode === 'google' && G.valid()) sync(); }, CONFIG.POLL_MINUTES * 60000);
+
+/* ============ Widget layouts ============ */
+const WIDGET = NATIVE || new URLSearchParams(location.search).has('widget');
+const WIDGET_KEY = 'archie.widgetMode';
+/** @typedef {'compact' | 'open' | 'full'} WidgetMode */
+/** @type {WidgetMode} */
+let widgetMode = 'compact';
+let suppressClick = false;
+/** Switch between the device-only widget, the device + tasks panel, and the full page.
+ * @param {WidgetMode} mode @returns {void} */
+function setWidgetMode(mode) {
+  widgetMode = mode;
+  try { localStorage.setItem(WIDGET_KEY, mode); } catch (e) {}
+  const root = document.documentElement;
+  root.classList.remove('compact', 'open', 'full');
+  root.classList.add(mode);
+  // In the panel, vitals sit above the task list; everywhere else they live under the device.
+  const vitals = $('#secVitals');
+  if (mode === 'open') $('#rightStack').insertBefore(vitals, $('#secTasks'));
+  else $('#deviceWrap').after(vitals);
+  $('#fullBtn').textContent = mode === 'full' ? 'Widget view' : 'Full view';
+  $('#closeBtn').hidden = mode === 'full';
+  if (NATIVE) window.ArchieNative.post({ type: 'mode', mode });
+}
+/** @returns {void} */
+function initWidget() {
+  if (!WIDGET) return;
+  document.documentElement.classList.add('widget');
+  let saved = 'compact';
+  try { saved = localStorage.getItem(WIDGET_KEY) || 'compact'; } catch (e) {}
+  setWidgetMode(saved === 'open' || saved === 'full' ? saved : 'compact');
+  $('#deviceHit').onclick = () => { if (suppressClick) { suppressClick = false; return; } setWidgetMode('open'); };
+  $('#closeBtn').onclick = () => setWidgetMode('compact');
+  $('#fullBtn').onclick = () => setWidgetMode(widgetMode === 'full' ? 'open' : 'full');
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && widgetMode === 'open') setWidgetMode('compact'); });
+  if (!NATIVE) return;
+  // Dragging: pressing on the shell (or the header in full view) moves the window; buttons and the screen still work.
+  document.addEventListener('pointerdown', e => {
+    suppressClick = false;
+    const t = e.target instanceof Element ? e.target : null;
+    if (!t) return;
+    const onShell = t.closest('.device') && (t.id === 'deviceHit' || !t.closest('button, .matrix'));
+    const onHeader = widgetMode === 'full' && t.closest('header') && !t.closest('button');
+    if (onShell || onHeader) window.ArchieNative.post({ type: 'dragArm' });
+  });
+  window.ArchieNative.on(m => {
+    if (m.type === 'token' || m.type === 'authError') {
+      for (const w of nativeAuthWaiters.splice(0)) m.type === 'token' ? w.resolve(m) : w.reject(new Error(m.message));
+    } else if (m.type === 'dragging') {
+      suppressClick = true;
+    } else if (m.type === 'signedOut') {
+      G.token = null; clearTimeout(refreshTimer); render();
+      showBanner('Signed out of Google. Reconnect any time.', 'Reconnect', connectGoogle);
+    }
+  });
+}
+
+/* ============ Boot ============ */
+(async function boot() {
+  initWidget();
+  buildIcons();
+  tick(); render(); renderTasks();
+  if (S.mode === 'demo') await useDemo();
+  else if (NATIVE) await connectGoogle({ silent: true });
+  else showBanner('Welcome back! Reconnect to Google Tasks to sync your pet.', 'Reconnect', connectGoogle);
+})();
+</script>
+</body>
+</html>
