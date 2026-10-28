@@ -97,112 +97,15 @@
   .msg::before { content: ""; position: absolute; top: -12px; left: 50%; margin-left: -9px; width: 14px; height: 14px; background: var(--card); border-left: 3px solid var(--line); border-top: 3px solid var(--line); transform: rotate(45deg); }
   @media (max-width: 460px) { html:not(.widget):not(.phone) .device { transform: scale(.8); transform-origin: top left; margin-left: calc(50% - 168px); margin-bottom: -110px; } }
 
-  /* pet motion: one LCD pixel per tick, every move and frame flip on the same beat */
+  /* pet motion: the script ("Pet motion" below) moves the pet one LCD pixel per tick and swaps its sprite frame on the same beat */
   .mover{position:absolute;left:0;top:0;width:112px;height:112px}
-  /* calm moods roam the whole screen (0.4s tick); lively moods tick faster; low moods sink and drift (0.6s tick) */
-  .m-content .mover{animation:swim 20s steps(1,end) infinite}
-  .m-worried .mover,.m-happy .mover{animation:swim 15s steps(1,end) infinite}
-  .m-hungry .mover,.m-sad .mover,.m-sick .mover{animation:drift 24s steps(1,end) infinite}
-  .m-happy .hopper{animation:hop .6s steps(1,end) infinite}
-  .fa{position:absolute;inset:0;animation:fa .8s steps(1,end) infinite}
-  .fb{position:absolute;inset:0;animation:fb .8s steps(1,end) infinite}
-  .m-happy .fa,.m-happy .fb,.m-worried .fa,.m-worried .fb{animation-duration:.6s}
-  .m-hungry .fa,.m-hungry .fb,.m-sad .fa,.m-sad .fb,.m-sick .fa,.m-sick .fb,.egg .fa,.egg .fb{animation-duration:1.2s}
-  .m-fainted .fa{animation:none;opacity:1}
-  .m-fainted .fb{display:none}
   .m-fainted .spr{transform:rotate(90deg)}
   .blink{animation:fa 1.2s steps(1,end) infinite}
-  @keyframes swim{
-    0%{transform:translate(7px,35px)}2%{transform:translate(7px,35px)}4%{transform:translate(7px,28px)}6%{transform:translate(14px,28px)}
-    8%{transform:translate(14px,21px)}10%{transform:translate(21px,21px)}12%{transform:translate(21px,14px)}14%{transform:translate(28px,14px)}
-    16%{transform:translate(35px,14px)}18%{transform:translate(35px,7px)}20%{transform:translate(42px,7px)}22%{transform:translate(49px,7px)}
-    24%{transform:translate(49px,7px)}26%{transform:translate(56px,7px)}28%{transform:translate(56px,14px)}30%{transform:translate(56px,21px)}
-    32%{transform:translate(56px,28px)}34%{transform:translate(49px,28px)}36%{transform:translate(49px,35px)}38%{transform:translate(49px,42px)}
-    40%{transform:translate(56px,42px)}42%{transform:translate(56px,49px)}44%{transform:translate(56px,56px)}46%{transform:translate(63px,56px)}
-    48%{transform:translate(70px,56px)}50%{transform:translate(77px,56px)}52%{transform:translate(84px,56px)}54%{transform:translate(91px,56px)}
-    56%{transform:translate(98px,56px)}58%{transform:translate(105px,56px)}60%{transform:translate(112px,56px)}62%{transform:translate(112px,56px)}
-    64%{transform:translate(112px,56px)}66%{transform:translate(105px,56px)}68%{transform:translate(98px,56px)}70%{transform:translate(91px,56px)}
-    72%{transform:translate(84px,56px)}74%{transform:translate(77px,56px)}76%{transform:translate(70px,56px)}78%{transform:translate(63px,56px)}
-    80%{transform:translate(56px,56px)}82%{transform:translate(56px,49px)}84%{transform:translate(49px,49px)}86%{transform:translate(49px,42px)}
-    88%{transform:translate(42px,42px)}90%{transform:translate(35px,42px)}92%{transform:translate(28px,42px)}94%{transform:translate(21px,42px)}
-    96%{transform:translate(21px,35px)}98%{transform:translate(14px,35px)}100%{transform:translate(7px,35px)}}
-  @keyframes drift{
-    0%{transform:translate(0px,56px)}2.5%{transform:translate(7px,56px)}5%{transform:translate(14px,56px)}7.5%{transform:translate(14px,49px)}
-    10%{transform:translate(21px,49px)}12.5%{transform:translate(28px,49px)}15%{transform:translate(28px,56px)}17.5%{transform:translate(35px,56px)}
-    20%{transform:translate(42px,56px)}22.5%{transform:translate(49px,56px)}25%{transform:translate(56px,56px)}27.5%{transform:translate(63px,56px)}
-    30%{transform:translate(70px,56px)}32.5%{transform:translate(77px,56px)}35%{transform:translate(84px,56px)}37.5%{transform:translate(91px,56px)}
-    40%{transform:translate(98px,56px)}42.5%{transform:translate(105px,56px)}45%{transform:translate(112px,56px)}47.5%{transform:translate(112px,56px)}
-    50%{transform:translate(105px,56px)}52.5%{transform:translate(98px,56px)}55%{transform:translate(91px,56px)}57.5%{transform:translate(84px,56px)}
-    60%{transform:translate(77px,56px)}62.5%{transform:translate(70px,56px)}65%{transform:translate(63px,56px)}67.5%{transform:translate(56px,56px)}
-    70%{transform:translate(49px,56px)}72.5%{transform:translate(42px,56px)}75%{transform:translate(42px,49px)}77.5%{transform:translate(35px,49px)}
-    80%{transform:translate(28px,49px)}82.5%{transform:translate(28px,56px)}85%{transform:translate(21px,56px)}87.5%{transform:translate(14px,56px)}
-    90%{transform:translate(7px,56px)}92.5%{transform:translate(0px,56px)}95%{transform:translate(0px,56px)}97.5%{transform:translate(0px,56px)}
-    100%{transform:translate(0px,56px)}}
-  /* Hatchling turns: front most of the time, sideways while cruising the seafloor, its back briefly at the surface (swim) or while sulking low (drift). Every view has two frames that flip on the shared tick. */
-  .fl,.fl2,.fr,.fr2,.fk,.fk2{position:absolute;inset:0;opacity:0;display:none}
-  .turns .fl,.turns .fl2,.turns .fr,.turns .fr2,.turns .fk,.turns .fk2{display:block}
-  .turns.m-content .fa{animation:sw-f1 20s steps(1,end) infinite}
-  .turns.m-content .fb{animation:sw-f2 20s steps(1,end) infinite}
-  .turns.m-content .fl{animation:sw-l1 20s steps(1,end) infinite}
-  .turns.m-content .fl2{animation:sw-l2 20s steps(1,end) infinite}
-  .turns.m-content .fr{animation:sw-r1 20s steps(1,end) infinite}
-  .turns.m-content .fr2{animation:sw-r2 20s steps(1,end) infinite}
-  .turns.m-content .fk{animation:sw-k1 20s steps(1,end) infinite}
-  .turns.m-content .fk2{animation:sw-k2 20s steps(1,end) infinite}
-  .turns.m-happy .fa,.turns.m-worried .fa{animation:sw-f1 15s steps(1,end) infinite}
-  .turns.m-happy .fb,.turns.m-worried .fb{animation:sw-f2 15s steps(1,end) infinite}
-  .turns.m-happy .fl,.turns.m-worried .fl{animation:sw-l1 15s steps(1,end) infinite}
-  .turns.m-happy .fl2,.turns.m-worried .fl2{animation:sw-l2 15s steps(1,end) infinite}
-  .turns.m-happy .fr,.turns.m-worried .fr{animation:sw-r1 15s steps(1,end) infinite}
-  .turns.m-happy .fr2,.turns.m-worried .fr2{animation:sw-r2 15s steps(1,end) infinite}
-  .turns.m-happy .fk,.turns.m-worried .fk{animation:sw-k1 15s steps(1,end) infinite}
-  .turns.m-happy .fk2,.turns.m-worried .fk2{animation:sw-k2 15s steps(1,end) infinite}
-  .turns.m-hungry .fa,.turns.m-sad .fa,.turns.m-sick .fa{animation:dr-f1 24s steps(1,end) infinite}
-  .turns.m-hungry .fb,.turns.m-sad .fb,.turns.m-sick .fb{animation:dr-f2 24s steps(1,end) infinite}
-  .turns.m-hungry .fl,.turns.m-sad .fl,.turns.m-sick .fl{animation:dr-l1 24s steps(1,end) infinite}
-  .turns.m-hungry .fl2,.turns.m-sad .fl2,.turns.m-sick .fl2{animation:dr-l2 24s steps(1,end) infinite}
-  .turns.m-hungry .fr,.turns.m-sad .fr,.turns.m-sick .fr{animation:dr-r1 24s steps(1,end) infinite}
-  .turns.m-hungry .fr2,.turns.m-sad .fr2,.turns.m-sick .fr2{animation:dr-r2 24s steps(1,end) infinite}
-  .turns.m-hungry .fk,.turns.m-sad .fk,.turns.m-sick .fk{animation:dr-k1 24s steps(1,end) infinite}
-  .turns.m-hungry .fk2,.turns.m-sad .fk2,.turns.m-sick .fk2{animation:dr-k2 24s steps(1,end) infinite}
-  @keyframes sw-f1{0%{opacity:1}2%{opacity:0}4%{opacity:1}6%{opacity:0}8%{opacity:1}10%{opacity:0}12%{opacity:1}14%{opacity:0}16%{opacity:1}18%{opacity:0}28%{opacity:1}30%{opacity:0}32%{opacity:1}34%{opacity:0}36%{opacity:1}38%{opacity:0}40%{opacity:1}42%{opacity:0}44%{opacity:1}46%{opacity:0}64%{opacity:1}66%{opacity:0}84%{opacity:1}86%{opacity:0}88%{opacity:1}90%{opacity:0}92%{opacity:1}94%{opacity:0}96%{opacity:1}98%{opacity:0}100%{opacity:0}}
-  @keyframes sw-f2{0%{opacity:0}2%{opacity:1}4%{opacity:0}6%{opacity:1}8%{opacity:0}10%{opacity:1}12%{opacity:0}14%{opacity:1}16%{opacity:0}18%{opacity:1}20%{opacity:0}26%{opacity:1}28%{opacity:0}30%{opacity:1}32%{opacity:0}34%{opacity:1}36%{opacity:0}38%{opacity:1}40%{opacity:0}42%{opacity:1}44%{opacity:0}62%{opacity:1}64%{opacity:0}82%{opacity:1}84%{opacity:0}86%{opacity:1}88%{opacity:0}90%{opacity:1}92%{opacity:0}94%{opacity:1}96%{opacity:0}98%{opacity:1}100%{opacity:1}}
-  @keyframes sw-l1{0%{opacity:0}68%{opacity:1}70%{opacity:0}72%{opacity:1}74%{opacity:0}76%{opacity:1}78%{opacity:0}80%{opacity:1}82%{opacity:0}100%{opacity:0}}
-  @keyframes sw-l2{0%{opacity:0}66%{opacity:1}68%{opacity:0}70%{opacity:1}72%{opacity:0}74%{opacity:1}76%{opacity:0}78%{opacity:1}80%{opacity:0}100%{opacity:0}}
-  @keyframes sw-r1{0%{opacity:0}48%{opacity:1}50%{opacity:0}52%{opacity:1}54%{opacity:0}56%{opacity:1}58%{opacity:0}60%{opacity:1}62%{opacity:0}100%{opacity:0}}
-  @keyframes sw-r2{0%{opacity:0}46%{opacity:1}48%{opacity:0}50%{opacity:1}52%{opacity:0}54%{opacity:1}56%{opacity:0}58%{opacity:1}60%{opacity:0}100%{opacity:0}}
-  @keyframes sw-k1{0%{opacity:0}20%{opacity:1}22%{opacity:0}24%{opacity:1}26%{opacity:0}100%{opacity:0}}
-  @keyframes sw-k2{0%{opacity:0}22%{opacity:1}24%{opacity:0}100%{opacity:0}}
-  @keyframes dr-f1{0%{opacity:1}2.5%{opacity:0}5%{opacity:1}7.5%{opacity:0}10%{opacity:1}12.5%{opacity:0}15%{opacity:1}17.5%{opacity:0}20%{opacity:1}22.5%{opacity:0}25%{opacity:1}27.5%{opacity:0}45%{opacity:1}47.5%{opacity:0}50%{opacity:1}52.5%{opacity:0}70%{opacity:1}72.5%{opacity:0}75%{opacity:1}77.5%{opacity:0}85%{opacity:1}87.5%{opacity:0}90%{opacity:1}92.5%{opacity:0}95%{opacity:1}97.5%{opacity:0}100%{opacity:0}}
-  @keyframes dr-f2{0%{opacity:0}2.5%{opacity:1}5%{opacity:0}7.5%{opacity:1}10%{opacity:0}12.5%{opacity:1}15%{opacity:0}17.5%{opacity:1}20%{opacity:0}22.5%{opacity:1}25%{opacity:0}47.5%{opacity:1}50%{opacity:0}72.5%{opacity:1}75%{opacity:0}82.5%{opacity:1}85%{opacity:0}87.5%{opacity:1}90%{opacity:0}92.5%{opacity:1}95%{opacity:0}97.5%{opacity:1}100%{opacity:1}}
-  @keyframes dr-l1{0%{opacity:0}55%{opacity:1}57.5%{opacity:0}60%{opacity:1}62.5%{opacity:0}65%{opacity:1}67.5%{opacity:0}100%{opacity:0}}
-  @keyframes dr-l2{0%{opacity:0}52.5%{opacity:1}55%{opacity:0}57.5%{opacity:1}60%{opacity:0}62.5%{opacity:1}65%{opacity:0}67.5%{opacity:1}70%{opacity:0}100%{opacity:0}}
-  @keyframes dr-r1{0%{opacity:0}30%{opacity:1}32.5%{opacity:0}35%{opacity:1}37.5%{opacity:0}40%{opacity:1}42.5%{opacity:0}100%{opacity:0}}
-  @keyframes dr-r2{0%{opacity:0}27.5%{opacity:1}30%{opacity:0}32.5%{opacity:1}35%{opacity:0}37.5%{opacity:1}40%{opacity:0}42.5%{opacity:1}45%{opacity:0}100%{opacity:0}}
-  @keyframes dr-k1{0%{opacity:0}80%{opacity:1}82.5%{opacity:0}100%{opacity:0}}
-  @keyframes dr-k2{0%{opacity:0}77.5%{opacity:1}80%{opacity:0}100%{opacity:0}}
-  /* Three-frame front (Inkling): tentacles alternate every tick while the expression changes only every fourth tick. Turn views keep their two frames. */
-  .fc{position:absolute;inset:0;opacity:0;display:none}
-  .three .fc{display:block}
-  .turns.three.m-content .fa{animation:sw3-a 20s steps(1,end) infinite}
-  .turns.three.m-happy .fa,.turns.three.m-worried .fa{animation:sw3-a 15s steps(1,end) infinite}
-  .turns.three.m-hungry .fa,.turns.three.m-sad .fa,.turns.three.m-sick .fa{animation:dr3-a 24s steps(1,end) infinite}
-  .turns.three.m-content .fb{animation:sw3-b 20s steps(1,end) infinite}
-  .turns.three.m-happy .fb,.turns.three.m-worried .fb{animation:sw3-b 15s steps(1,end) infinite}
-  .turns.three.m-hungry .fb,.turns.three.m-sad .fb,.turns.three.m-sick .fb{animation:dr3-b 24s steps(1,end) infinite}
-  .turns.three.m-content .fc{animation:sw3-c 20s steps(1,end) infinite}
-  .turns.three.m-happy .fc,.turns.three.m-worried .fc{animation:sw3-c 15s steps(1,end) infinite}
-  .turns.three.m-hungry .fc,.turns.three.m-sad .fc,.turns.three.m-sick .fc{animation:dr3-c 24s steps(1,end) infinite}
-  @keyframes sw3-a{0%{opacity:1}2%{opacity:0}4%{opacity:1}6%{opacity:0}8%{opacity:1}10%{opacity:0}12%{opacity:1}14%{opacity:0}16%{opacity:1}18%{opacity:0}28%{opacity:1}30%{opacity:0}32%{opacity:1}34%{opacity:0}36%{opacity:1}38%{opacity:0}40%{opacity:1}42%{opacity:0}44%{opacity:1}46%{opacity:0}64%{opacity:1}66%{opacity:0}84%{opacity:1}86%{opacity:0}88%{opacity:1}90%{opacity:0}92%{opacity:1}94%{opacity:0}96%{opacity:1}98%{opacity:0}100%{opacity:0}}
-  @keyframes sw3-b{0%{opacity:0}6%{opacity:1}8%{opacity:0}14%{opacity:1}16%{opacity:0}30%{opacity:1}32%{opacity:0}38%{opacity:1}40%{opacity:0}62%{opacity:1}64%{opacity:0}86%{opacity:1}88%{opacity:0}94%{opacity:1}96%{opacity:0}100%{opacity:0}}
-  @keyframes sw3-c{0%{opacity:0}2%{opacity:1}4%{opacity:0}10%{opacity:1}12%{opacity:0}18%{opacity:1}20%{opacity:0}26%{opacity:1}28%{opacity:0}34%{opacity:1}36%{opacity:0}42%{opacity:1}44%{opacity:0}82%{opacity:1}84%{opacity:0}90%{opacity:1}92%{opacity:0}98%{opacity:1}100%{opacity:1}}
-  @keyframes dr3-a{0%{opacity:1}2.5%{opacity:0}5%{opacity:1}7.5%{opacity:0}10%{opacity:1}12.5%{opacity:0}15%{opacity:1}17.5%{opacity:0}20%{opacity:1}22.5%{opacity:0}25%{opacity:1}27.5%{opacity:0}45%{opacity:1}47.5%{opacity:0}50%{opacity:1}52.5%{opacity:0}70%{opacity:1}72.5%{opacity:0}75%{opacity:1}77.5%{opacity:0}85%{opacity:1}87.5%{opacity:0}90%{opacity:1}92.5%{opacity:0}95%{opacity:1}97.5%{opacity:0}100%{opacity:0}}
-  @keyframes dr3-b{0%{opacity:0}7.5%{opacity:1}10%{opacity:0}17.5%{opacity:1}20%{opacity:0}47.5%{opacity:1}50%{opacity:0}87.5%{opacity:1}90%{opacity:0}97.5%{opacity:1}100%{opacity:1}}
-  @keyframes dr3-c{0%{opacity:0}2.5%{opacity:1}5%{opacity:0}12.5%{opacity:1}15%{opacity:0}22.5%{opacity:1}25%{opacity:0}72.5%{opacity:1}75%{opacity:0}82.5%{opacity:1}85%{opacity:0}92.5%{opacity:1}95%{opacity:0}100%{opacity:0}}
+  .hopper.hop1{animation:hop1 .8s steps(1,end) 1}
   @keyframes hop{0%{transform:translateY(0)}50%{transform:translateY(-7px)}100%{transform:translateY(-7px)}}
+  @keyframes hop1{0%{transform:translateY(-7px)}50%{transform:translateY(0)}100%{transform:translateY(0)}}
   @keyframes fa{0%{opacity:1}50%{opacity:0}100%{opacity:0}}
-  @keyframes fb{0%{opacity:0}50%{opacity:1}100%{opacity:1}}
-  @media (prefers-reduced-motion:reduce){.mover,.hopper,.fb,.fc,.fl,.fl2,.fr,.fr2,.fk,.fk2,.blink{animation:none!important}.fc,.fl,.fl2,.fr,.fr2,.fk,.fk2{opacity:0!important}.fa{animation:none!important;opacity:1}.fb{opacity:0}}
+  @media (prefers-reduced-motion:reduce){.hopper,.blink{animation:none!important}}
   /* one-off reactions: a quick hop when fed or patted, a flicker when evolving */
   .matrix.jump .hopper { animation: hop .3s steps(1, end) 4 !important; }
   .matrix.evolve .spr { animation: evo .3s steps(1, end) 8; }
@@ -354,18 +257,8 @@
             <div class="icons" id="iconsTop"></div>
             <div id="pet" class="matrix" role="button" tabindex="0" aria-label="Your pet. Press to give it a pat.">
               <div class="mover" id="mover">
-                <div class="hopper">
-                  <div class="spr">
-                    <div class="fa"><span class="pix"></span></div>
-                    <div class="fb"><span class="pix"></span></div>
-                    <div class="fc"><span class="pix"></span></div>
-                    <div class="fl"><span class="pix"></span></div>
-                    <div class="fl2"><span class="pix"></span></div>
-                    <div class="fr"><span class="pix"></span></div>
-                    <div class="fr2"><span class="pix"></span></div>
-                    <div class="fk"><span class="pix"></span></div>
-                    <div class="fk2"><span class="pix"></span></div>
-                  </div>
+                <div class="hopper" id="hopper">
+                  <div class="spr"><span class="pix" id="petPix"></span></div>
                 </div>
               </div>
               <div class="moodicon" aria-hidden="true"><span id="moodPix" class="pix"></span></div>
@@ -918,6 +811,7 @@ async function sync() {
   finally { syncing = false; $('#syncBtn').disabled = false; }
 }
 
+// #region sprites
 /* ============ Pixel sprites (16×16 monochrome; '#' is a lit LCD pixel) ============ */
 
 /** Turn a sprite grid into one box-shadow list: each lit cell becomes a p×p square.
@@ -953,6 +847,10 @@ var TL_SPRITES = {
     l: ['................','................','................','................','................','................',
         '......####......','.....#....#.....','....#......#....','....#.#....#....','....#......#....',
         '....##.....#....','....#......#....','.....##.##.##...','................','................'],
+    // happy face, flashed now and then in the happy mood: eyes lift a row and a small smile sits clear of its feet
+    h: ['................','................','................','................','................','................',
+        '......####......','.....#....#.....','....#.#..#.#....','....#......#....','....#.#..#.#....',
+        '....#..##..#....','....#......#....','...#.#.##.#.#...','................','................'],
     k: ['................','................','................','................','................','................',
         '......####......','.....#....#.....','....#......#....','....#......#....','....#......#....',
         '....#......#....','....#......#....','....##.##.##....','................','................'],
@@ -982,6 +880,14 @@ var TL_SPRITES = {
     l2: ['................','......##........','.....#..#.......','...##....##.....','..#........#....','..#.##.......#..',
         '..#.##.......#..','..#..........#..','..#..........#..','..##.........#..','...#........#...',
         '....#..#..#.....','....#...#..#....','.....#..#...#...','......#..#...#..','.....##...#...##'],
+    // happy face, flashed now and then in the happy mood: arched "^ ^" eyes and a curved smile
+    h: ['................','.......##.......','......#..#......','....##....##....','...#........#...','..#..........#..',
+        '..#..#....#..#..','..#.#.#..#.#.#..','..#..........#..','..#...#..#...#..','...#...##...#...',
+        '...#.#....#.#...','...#..#..#..#...','..#...#..#...#..','..#..#....#..#..','...##.#..#.##...'],
+    // third side frame: frame L's eyes with frame L2's arms, so a side swim runs L→LC→L→L2 and the eyes change only every fourth tick
+    lc: ['................','......##........','.....#..#.......','...##....##.....','..#........#....','..#..........#..',
+        '..#.##.......#..','..#.##.......#..','..#..........#..','..##.........#..','...#........#...',
+        '....#..#..#.....','....#...#..#....','.....#..#...#...','......#..#...#..','.....##...#...##'],
     k: ['................','.......##.......','......#..#......','....##....##....','...#........#...','..#..........#..',
         '..#..........#..','..#..........#..','..#..........#..','..#..........#..','...#........#...',
         '...#.#....#.#...','..#..#....#..#..','..#...#..#...#..','...#..#..#..#...','.##..#....#..##.'],
@@ -1007,6 +913,14 @@ var TL_SPRITES = {
         '.##.......#.....','...#..#..#......','....#..#..#.....','.....#..#..#.##.','....#....#..#...'],
     l2: ['................','........##......','.......#.#......','......#..#......','.....#..#.#.....','....#..#..#.....',
         '...#.#....#.....','..#...#...#.....','.##########.....','..#.##....#.....','..#.......#.....',
+        '.##.......#.....','...#..#..#......','...#...#..#.....','....#...#..#....','.....##...#..##.'],
+    // happy face, flashed now and then in the happy mood: squinted eyes and a wide grin (its face is only 3 pixels tall)
+    h: ['...........##...','..........#.#...','.........#..#...','........#..#.#..','.......#..#..#..','.....##..#..#.#.',
+        '....#...#..#..#.','..##..#..#..#.#.','.##############.','...#.##..##.#...','...#.#....#.#...',
+        '...#..####..#...','....#.#..#.#....','...#.#....#.#...','...#..#..#..#...','.##...#..#...##.'],
+    // third side frame: frame L's eyes with frame L2's arms, so a side swim runs L→LC→L→L2 and the eyes change only every fourth tick
+    lc: ['................','........##......','.......#.#......','......#..#......','.....#..#.#.....','....#..#..#.....',
+        '...#.#....#.....','..#...#...#.....','.##########.....','..#.##....#.....','..#.##....#.....',
         '.##.......#.....','...#..#..#......','...#...#..#.....','....#...#..#....','.....##...#..##.'],
     k: ['...........##...','..........#.#...','.........#..#...','........#..#.#..','.......#..#..#..','.....##..#..#.#.',
         '....#...#..#..#.','..##..#..#..#.#.','.##############.','...#........#...','...#........#...',
@@ -1034,6 +948,14 @@ var TL_SPRITES = {
     l2: ['.#.#.....#.#....','..##......##....','...#.####.#.....','...##....##.....','..#..#.....#....','.#..#......#....',
         '.#.#.......#....','.#.........#....','.#.###.....#....','.#.........#....','.#..##.....#....',
         '..#.......#.....','...#..#..#.##...','...#...#..#..#..','....#...#..#...#','.....##...#..##.'],
+    // happy face, flashed now and then in the happy mood: arched eyes and a curved smile under the spots
+    h: ['#.#..........#.#','.##...####...##.','..#.##....##.#..','...#..#..#..#...','..#..#....#..#..','.#.#........#.#.',
+        '.#............#.','.#...#....#...#.','.#..#.#..#.#..#.','.#.#........#.#.','.#...#....#...#.',
+        '..#...####...#..','.##.#......#.##.','..#..#....#..#..','.#...#....#...#.','#...#......#...#'],
+    // third side frame: frame L's eyes with frame L2's arms, so a side swim runs L→LC→L→L2 and the eyes change only every fourth tick
+    lc: ['.#.#.....#.#....','..##......##....','...#.####.#.....','...##....##.....','..#..#..#..#....','.#..#......#....',
+        '.#.#.......#....','.#.###.....#....','.#.#.#.....#....','.#....#....#....','.#..##.....#....',
+        '..#.......#.....','...#..#..#.##...','...#...#..#..#..','....#...#..#...#','.....##...#..##.'],
     k: ['#.#..........#.#','.##...####...##.','..#.##....##.#..','...#..#..#..#...','..#..#....#..#..','.#.#........#.#.',
         '.#............#.','.#............#.','.#............#.','.#............#.','.#............#.',
         '..#..........#..','.##.#......#.##.','.#..#......#..#.','#...#......#...#','#..#........#..#'],
@@ -1059,6 +981,14 @@ var TL_SPRITES = {
         '#.#........#....','#..#..#..#..##..','.#..#..#..#...#.','#....#..#..#...#','#...#....#..##..'],
     l2: ['#...#.##.#......','#...######......','.#.########.....','..##.......##...','..#...##....#...','.#....##.....#..',
         '.#...........#..','.#.##........#..','.#...........#..','.#.####......#..','.#..##......#...',
+        '#.#........#....','#..#..#..#..##..','#...#..#..#...#.','.#...#..#..#...#','#.....#...#.##..'],
+    // happy face, flashed now and then in the happy mood: arched eyes and a wide fanged grin
+    h: ['#....#.##.#....#','#....######....#','.#..########..#.','..##........##..','..#....##....#..','.#.....##.....#.',
+        '.#..#......#..#.','.#.#.#....#.#.#.','.#............#.','.#..#......#..#.','.#...######...#.',
+        '#.#..........#.#','#..#..#..#..#..#','.#.#.#..#...#.#.','#.#..#..#....#.#','#.....#..#.....#'],
+    // third side frame: frame L's eyes with frame L2's arms, so a side swim runs L→LC→L→L2 and the eyes change only every fourth tick
+    lc: ['#...#.##.#......','#...######......','.#.########.....','..##.......##...','..#...##....#...','.#....##.....#..',
+        '.#.##........#..','.#.##........#..','.#...........#..','.#.####......#..','.#..##......#...',
         '#.#........#....','#..#..#..#..##..','#...#..#..#...#.','.#...#..#..#...#','#.....#...#.##..'],
     k: ['#....#.##.#....#','#....######....#','.#..########..#.','..##........##..','..#..........#..','.#............#.',
         '.#............#.','.#............#.','.#............#.','.#............#.','.#............#.',
@@ -1089,50 +1019,218 @@ var TL_NAV = {
 };
 var TL_HEART_FULL = ['.##.##.','#######','#######','.#####.','..###..','...#...'];
 var TL_HEART_EMPTY = ['.##.##.','#..#..#','#.....#','.#...#.','..#.#..','...#...'];
+// #endregion sprites
+
+// #region pet-motion
+/* ============ Pet motion (no page access here; tests/motion.test.mjs checks it) ============
+   Calm, happy and worried pets wander: each tick they move one LCD pixel toward a randomly chosen spot,
+   sometimes pausing when they get there. Hungry, sad and sick pets follow a fixed route along the seafloor.
+   Positions are in LCD pixels: x runs 0–16 and y runs 0–8 (the sprite's top-left corner). */
+/** @typedef {'f' | 'l' | 'r' | 'k'} Facing front, left, right or away */
+/** @typedef {{tick: number, pauseChance: number, pause: [number, number], hopArrive: number, hopPause: number, smile: boolean}} WanderStyle */
+/** @typedef {{x: number, y: number, tx: number, ty: number, pause: number, leg: Facing, face: Facing, frame: number,
+ *   route: number, onRoute: boolean, smile: string[], lastSmile: number}} Motion */
+/** @typedef {{a: string[], b: string[], c?: string[], lc?: string[]}} SpriteSet the frames a stage has (only the ones motion cares about) */
+
+const MOTION = { maxX: 16, maxY: 8, minTrip: 3, surface: 1, routeTick: 600, eggTick: 600, smileCooldown: 60000, smileChance: 0.35 };
+/** tick: ms per step · pauseChance: chance of resting on arrival · pause: rest length in ticks ·
+ * hopArrive / hopPause: chance of a single hop on arrival / per resting tick · smile: may flash the happy face
+ * @type {Record<string, WanderStyle>} */
+const WANDER = {
+  content: { tick: 400, pauseChance: 0.45, pause: [3, 8], hopArrive: 0, hopPause: 0, smile: false },
+  happy: { tick: 400, pauseChance: 0.3, pause: [2, 5], hopArrive: 0.6, hopPause: 0.12, smile: true },
+  worried: { tick: 300, pauseChance: 0.3, pause: [2, 4], hopArrive: 0, hopPause: 0, smile: false },
+};
+/** The low-mood seafloor lap (24 seconds): [x, y, facing] for each tick. Side views while cruising, a brief look away while sulking.
+ * @type {Array<[number, number, Facing]>} */
+const SEAFLOOR = [[0, 8], [1, 8], [2, 8], [2, 7], [3, 7], [4, 7], [4, 8], [5, 8], [6, 8], [7, 8], [8, 8], [9, 8], [10, 8], [11, 8],
+  [12, 8], [13, 8], [14, 8], [15, 8], [16, 8], [16, 8], [15, 8], [14, 8], [13, 8], [12, 8], [11, 8], [10, 8], [9, 8], [8, 8],
+  [7, 8], [6, 8], [6, 7], [5, 7], [4, 7], [4, 8], [3, 8], [2, 8], [1, 8], [0, 8], [0, 8], [0, 8]]
+  .map(([x, y], i) => [x, y, i >= 11 && i <= 17 ? 'r' : i >= 21 && i <= 27 ? 'l' : i === 31 || i === 32 ? 'k' : 'f']);
+
+/** Where the pet sits when it isn't moving (eggs and fainted pets rest on the seafloor; also used with reduced motion).
+ * @param {string} mood @returns {[number, number]} */
+function restSpot(mood) {
+  if (mood === 'egg') return [8, 8];
+  if (mood === 'fainted') return [4, 8];
+  if (mood === 'hungry' || mood === 'sad' || mood === 'sick') return [0, 8];
+  return [1, 5];
+}
+/** @param {number} lo @param {number} hi @param {() => number} rand @returns {number} a whole number from lo to hi */
+const randInt = (lo, hi, rand) => lo + Math.floor(rand() * (hi - lo + 1));
+/** @param {number} x @param {number} y @returns {Motion} a pet standing still at (x, y) */
+function newMotion(x, y) {
+  return { x, y, tx: x, ty: y, pause: 0, leg: 'f', face: 'f', frame: 0, route: 0, onRoute: false, smile: [], lastSmile: -Infinity };
+}
+/** Face sideways for long, mostly sideways trips; stay facing front for short or mostly vertical ones. @param {Motion} m @returns {void} */
+function setLeg(m) {
+  const dx = m.tx - m.x, dy = m.ty - m.y;
+  m.leg = Math.abs(dx) >= MOTION.minTrip && Math.abs(dx) >= Math.abs(dy) ? (dx > 0 ? 'r' : 'l') : 'f';
+}
+/** Choose the next spot to swim to, at least a few pixels away. @param {Motion} m @param {() => number} rand @returns {void} */
+function pickTarget(m, rand) {
+  for (let i = 0; i < 20; i++) {
+    m.tx = randInt(0, MOTION.maxX, rand); m.ty = randInt(0, MOTION.maxY, rand);
+    if (Math.abs(m.tx - m.x) + Math.abs(m.ty - m.y) >= MOTION.minTrip) break;
+  }
+  if (Math.abs(m.tx - m.x) + Math.abs(m.ty - m.y) < MOTION.minTrip) m.tx = m.x < MOTION.maxX / 2 ? MOTION.maxX : 0;
+  setLeg(m);
+}
+/** Move one pixel toward (tx, ty), favouring whichever direction has further to go. @param {Motion} m @param {() => number} rand @returns {void} */
+function stepToward(m, rand) {
+  const dx = m.tx - m.x, dy = m.ty - m.y;
+  if (!dx && !dy) return;
+  if (rand() < Math.abs(dx) / (Math.abs(dx) + Math.abs(dy))) m.x += Math.sign(dx); else m.y += Math.sign(dy);
+}
+/** @param {Motion} m @returns {Facing} away while resting at the surface, otherwise front */
+const restFacing = m => (m.y <= MOTION.surface ? 'k' : 'f');
+
+/** One wandering tick. The happy face (happy mood only, at most once a minute) flashes during a front-facing rest:
+ * happy → neutral two or three times while the pet holds still.
+ * @param {Motion} m @param {WanderStyle} style @param {number} now ms @param {() => number} rand @returns {boolean} whether to hop */
+function wanderStep(m, style, now, rand) {
+  m.onRoute = false;
+  if (m.smile.length) return false;
+  if (m.pause > 0) {
+    m.pause--; m.face = restFacing(m);
+    if (m.face !== 'f') return false;
+    if (style.smile && now - m.lastSmile >= MOTION.smileCooldown && rand() < MOTION.smileChance) {
+      m.smile = [];
+      for (let i = randInt(2, 3, rand); i > 0; i--) m.smile.push('h', 'a');
+      m.lastSmile = now;
+      return false;
+    }
+    return rand() < style.hopPause;
+  }
+  if (m.x === m.tx && m.y === m.ty) {
+    const hop = rand() < style.hopArrive;
+    if (rand() < style.pauseChance) { m.pause = randInt(style.pause[0], style.pause[1], rand); m.face = restFacing(m); }
+    pickTarget(m, rand);
+    return hop;
+  }
+  stepToward(m, rand); m.face = m.leg;
+  return false;
+}
+/** One low-mood tick: sink back to the start of the seafloor lap, then follow it. @param {Motion} m @param {() => number} rand @returns {void} */
+function routeStep(m, rand) {
+  m.smile = []; m.pause = 0;
+  if (!m.onRoute) {
+    const [sx, sy] = SEAFLOOR[0];
+    if (m.tx !== sx || m.ty !== sy) { m.tx = sx; m.ty = sy; setLeg(m); }
+    if (m.x !== sx || m.y !== sy) { stepToward(m, rand); m.face = m.leg; return; }
+    m.onRoute = true; m.route = 0;
+  } else m.route = (m.route + 1) % SEAFLOOR.length;
+  const [x, y, face] = SEAFLOOR[m.route];
+  m.x = x; m.y = y; m.face = face;
+}
+/** Which frame to draw. Front and side views of creatures with a third frame loop A→C→A→B (the arms move every tick, the eyes
+ * only every fourth); the others alternate two frames. A happy-face flash takes over until it's done.
+ * @param {Motion} m @param {SpriteSet} spr @returns {string} a frame key ('a', 'b', 'c', 'h', 'l', 'lc', 'l2', 'r', 'rc', 'r2', 'k', 'k2') */
+function frameKey(m, spr) {
+  if (m.smile.length) return /** @type {string} */ (m.smile.shift());
+  /** @type {Record<Facing, string[]>} */
+  const loops = { f: spr.c ? ['a', 'c', 'a', 'b'] : ['a', 'b'], l: spr.lc ? ['l', 'lc', 'l', 'l2'] : ['l', 'l2'],
+    r: spr.lc ? ['r', 'rc', 'r', 'r2'] : ['r', 'r2'], k: ['k', 'k2'] };
+  const seq = loops[m.face];
+  return seq[m.frame % seq.length];
+}
+/** Advance the pet one tick in a moving mood. @param {Motion} m @param {string} mood @param {SpriteSet} spr
+ * @param {number} now ms @param {() => number} rand @returns {{key: string, hop: boolean, delay: number}} delay: ms until the next tick */
+function motionStep(m, mood, spr, now, rand) {
+  const before = m.face, style = WANDER[mood];
+  let hop = false;
+  if (style) hop = wanderStep(m, style, now, rand); else routeStep(m, rand);
+  m.frame = m.face === before ? m.frame + 1 : 0; // a turn always starts on the main frame
+  return { key: frameKey(m, spr), hop, delay: style ? style.tick : MOTION.routeTick };
+}
+// #endregion pet-motion
 
 /* ============ Rendering ============ */
 const LCD_PX = 7;                 // one LCD pixel, in CSS px
 const LCD_INK = '#222a1e';
-/** @type {Array<[string, string]>} sprite layer class → frame key */
-const LAYERS = [['fa', 'a'], ['fb', 'b'], ['fc', 'c'], ['fl', 'l'], ['fl2', 'l2'], ['fr', 'r'], ['fr2', 'r2'], ['fk', 'k'], ['fk2', 'k2']];
 /** @param {string[]} rows @returns {string[]} the same sprite flipped left-to-right */
 const mirror = rows => rows.map(r => r.split('').reverse().join(''));
 const RECUR_ICON = tlShadow(TL_NAV.recurring, 2, 'currentColor');
 const HEART_FULL = tlShadow(TL_HEART_FULL, 3, 'currentColor');
 const HEART_EMPTY = tlShadow(TL_HEART_EMPTY, 3, 'currentColor');
 
-/** Where the pet rests before its motion loop starts (eggs and fainted pets sit on the seafloor).
- * @param {string} mood @returns {[number, number]} */
-function restSpot(mood) {
-  if (mood === 'egg') return [56, 56];
-  if (mood === 'fainted') return [28, 56];
-  if (mood === 'hungry' || mood === 'sad' || mood === 'sick') return [0, 56];
-  return [7, 35];
-}
-
+/* ---- Pet motion on the LCD: one timer runs the ticks; eggs rock in place, fainted pets lie still,
+   and the reduced-motion setting keeps the pet parked on its front frame ---- */
+const REDUCED_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)');
+const petMotion = newMotion(...restSpot('content'));
+/** @type {Record<string, string>} box-shadow for each frame key of the current stage */
+let petFrames = {};
+let petMood = '';
 let petStage = -1;
-/** Draw the pet on the LCD. Sprite layers are rebuilt only when the stage changes, so motion loops keep running smoothly between renders.
+/** @type {number | undefined} */
+let petTimer;
+/** @param {Record<string, string[] | undefined>} spr @returns {Record<string, string>} every frame's shadow; right-facing frames mirror the left ones */
+function buildFrames(spr) {
+  /** @type {Record<string, string>} */
+  const out = {};
+  for (const [key, rows] of Object.entries(spr)) if (rows) out[key] = tlShadow(rows, LCD_PX, LCD_INK);
+  for (const [l, r] of [['l', 'r'], ['l2', 'r2'], ['lc', 'rc']]) { const rows = spr[l]; if (rows) out[r] = tlShadow(mirror(rows), LCD_PX, LCD_INK); }
+  return out;
+}
+/** @param {string} key @returns {void} */
+function drawPet(key) {
+  $('#petPix').style.boxShadow = petFrames[key] || petFrames.a;
+  $('#mover').style.transform = `translate(${petMotion.x * LCD_PX}px, ${petMotion.y * LCD_PX}px)`;
+}
+/** A single hop lasting two ticks. @param {number} tickMs @returns {void} */
+function hopOnce(tickMs) {
+  const h = $('#hopper');
+  h.classList.remove('hop1'); void h.offsetWidth;
+  h.style.animationDuration = tickMs * 2 + 'ms';
+  h.classList.add('hop1');
+}
+/** Draw this tick and schedule the next. @returns {void} */
+function petTick() {
+  clearTimeout(petTimer);
+  if (petMood === 'fainted' || REDUCED_MOTION.matches) {
+    [petMotion.x, petMotion.y] = restSpot(petMood); petMotion.smile = [];
+    drawPet('a');
+    return;
+  }
+  if (petMood === 'egg') {
+    [petMotion.x, petMotion.y] = restSpot(petMood);
+    petMotion.frame++;
+    drawPet(petMotion.frame % 2 ? 'b' : 'a');
+    petTimer = setTimeout(petTick, MOTION.eggTick);
+    return;
+  }
+  const r = motionStep(petMotion, petMood, TL_SPRITES[STAGES[petStage].name], Date.now(), Math.random);
+  drawPet(r.key);
+  if (r.hop) hopOnce(r.delay);
+  petTimer = setTimeout(petTick, r.delay);
+}
+/** Switch the motion to a new mood; nothing happens if the mood hasn't changed. @param {string} mood @returns {void} */
+function setPetMotion(mood) {
+  if (mood === petMood) return;
+  const was = petMood;
+  petMood = mood;
+  if (!was || was === 'egg' || was === 'fainted') [petMotion.x, petMotion.y] = restSpot(mood);
+  petMotion.smile = []; petMotion.pause = 0; petMotion.onRoute = false;
+  if (WANDER[mood]) pickTarget(petMotion, Math.random);
+  petTick();
+}
+REDUCED_MOTION.addEventListener('change', petTick);
+
+/** Draw the pet on the LCD. Frames are rebuilt only when the stage changes; the motion timer keeps running between renders.
  * @param {number} st stage index @param {string} mood @returns {void} */
 function renderPet(st, mood) {
   const pet = $('#pet');
   const spr = TL_SPRITES[STAGES[st].name];
   if (st !== petStage) {
     petStage = st;
-    /** @type {Record<string, string[]|undefined>} */
-    const frames = { a: spr.a, b: spr.b, c: spr.c, l: spr.l, l2: spr.l2, r: spr.l && mirror(spr.l), r2: spr.l2 && mirror(spr.l2), k: spr.k, k2: spr.k2 };
-    for (const [cls, key] of LAYERS) pet.querySelector(`.${cls} .pix`).style.boxShadow = frames[key] ? tlShadow(frames[key], LCD_PX, LCD_INK) : 'none';
+    petFrames = buildFrames(spr);
     $('#logoPix').style.boxShadow = tlShadow(spr.a, 3, 'currentColor');
   }
   const cls = ['matrix', st === 0 ? 'egg' : 'm-' + mood];
-  if (st > 0 && spr.l) cls.push('turns');
-  if (st > 0 && spr.c) cls.push('three');
   for (const c of pet.classList) if (c === 'jump' || c === 'evolve' || c === 'showmood') cls.push(c);
   const next = cls.join(' ');
   if (pet.className !== next) pet.className = next;
-  const [x, y] = restSpot(mood);
-  const tf = `translate(${x}px, ${y}px)`;
-  const mover = $('#mover');
-  if (mover.style.transform !== tf) mover.style.transform = tf;
+  setPetMotion(st === 0 ? 'egg' : mood);
   $('#moodPix').style.boxShadow = st === 0 ? 'none' : tlShadow(TL_MOOD_ICONS[mood], LCD_PX, LCD_INK);
   pet.setAttribute('aria-label', st === 0 ? `Your egg. Press to give it a pat.` : `${S.name} the ${STAGES[st].name}, feeling ${mood}. Press to give it a pat.`);
 }
